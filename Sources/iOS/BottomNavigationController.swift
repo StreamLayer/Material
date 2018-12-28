@@ -29,6 +29,7 @@
  */
 
 import UIKit
+import Motion
 
 extension UIViewController {
   /**
@@ -41,13 +42,47 @@ extension UIViewController {
   }
 }
 
-open class BottomNavigationController: UITabBarController {
+private class MaterialTabBar: UITabBar {
+  override func sizeThatFits(_ size: CGSize) -> CGSize {
+    var v = super.sizeThatFits(size)
+    let offset = v.height - HeightPreset.normal.rawValue
+    v.height = heightPreset.rawValue + offset
+    return v
+  }
+}
+
+open class BottomNavigationController: UITabBarController, Themeable {
+  /// A Boolean that controls if the swipe feature is enabled.
+  open var isSwipeEnabled = true {
+    didSet {
+      guard isSwipeEnabled else {
+        removeSwipeGesture()
+        return
+      }
+      
+      prepareSwipeGesture()
+    }
+  }
+  
+  /**
+   A UIPanGestureRecognizer property internally used for the interactive
+   swipe.
+   */
+  public private(set) var interactiveSwipeGesture: UIPanGestureRecognizer?
+  
+  /**
+   A private integer for storing index of current view controller
+   during interactive transition.
+   */
+  private var currentIndex = -1
+  
   /**
    An initializer that initializes the object with a NSCoder object.
    - Parameter aDecoder: A NSCoder instance.
    */
   public required init?(coder aDecoder: NSCoder) {
     super.init(coder: aDecoder)
+    setTabBarClass()
   }
   
   /**
@@ -57,11 +92,13 @@ open class BottomNavigationController: UITabBarController {
    */
   public override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
     super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+    setTabBarClass()
   }
   
   /// An initializer that accepts no parameters.
   public init() {
     super.init(nibName: nil, bundle: nil)
+    setTabBarClass()
   }
   
   /**
@@ -70,6 +107,7 @@ open class BottomNavigationController: UITabBarController {
    */
   public init(viewControllers: [UIViewController]) {
     super.init(nibName: nil, bundle: nil)
+    setTabBarClass()
     self.viewControllers = viewControllers
   }
   
@@ -94,7 +132,7 @@ open class BottomNavigationController: UITabBarController {
         if .phone == Device.userInterfaceIdiom {
           if nil == item.title {
             let inset: CGFloat = 7
-            item.imageInsets = UIEdgeInsetsMake(inset, 0, -inset, 0)
+            item.imageInsets = UIEdgeInsets.init(top: inset, left: 0, bottom: -inset, right: 0)
           } else {
             let inset: CGFloat = 6
             item.titlePositionAdjustment.vertical = -inset
@@ -102,10 +140,10 @@ open class BottomNavigationController: UITabBarController {
         } else {
           if nil == item.title {
             let inset: CGFloat = 9
-            item.imageInsets = UIEdgeInsetsMake(inset, 0, -inset, 0)
+            item.imageInsets = UIEdgeInsets.init(top: inset, left: 0, bottom: -inset, right: 0)
           } else {
             let inset: CGFloat = 3
-            item.imageInsets = UIEdgeInsetsMake(inset, 0, -inset, 0)
+            item.imageInsets = UIEdgeInsets.init(top: inset, left: 0, bottom: -inset, right: 0)
             item.titlePositionAdjustment.vertical = -inset
           }
         }
@@ -128,10 +166,155 @@ open class BottomNavigationController: UITabBarController {
     view.contentScaleFactor = Screen.scale
     
     prepareTabBar()
+    isSwipeEnabled = true
+    isMotionEnabled = true
+    applyCurrentTheme()
+  }
+  
+  /**
+   Applies the given theme.
+   - Parameter theme: A Theme.
+   */
+  open func apply(theme: Theme) {
+    tabBar.tintColor = theme.secondary
+    tabBar.barTintColor = theme.background
+    tabBar.dividerColor = theme.onSurface.withAlphaComponent(0.12)
+    
+    if #available(iOS 10.0, *) {
+      tabBar.unselectedItemTintColor = theme.onSurface.withAlphaComponent(0.54)
+    }
   }
 }
 
-fileprivate extension BottomNavigationController {
+private extension BottomNavigationController {
+  /**
+   A target method contolling interactive swipe transition based on
+   gesture recognizer.
+   - Parameter _ gesture: A UIPanGestureRecognizer.
+   */
+  @objc
+  func handleTransitionPan(_ gesture: UIPanGestureRecognizer) {
+    guard selectedIndex != NSNotFound else {
+      return
+    }
+    
+    let translationX = gesture.translation(in: nil).x
+    let velocityX = gesture.velocity(in: nil).x
+    
+    switch gesture.state {
+    case .began, .changed:
+      let isSlidingLeft = currentIndex == -1 ? velocityX < 0 : translationX < 0
+      
+      if currentIndex == -1 {
+        currentIndex = selectedIndex
+      }
+      
+      let nextIndex = currentIndex + (isSlidingLeft ? 1 : -1)
+      
+      if selectedIndex != nextIndex {
+        /// 5 point threshold
+        guard abs(translationX) > 5 else {
+          return
+        }
+        
+        if currentIndex != selectedIndex {
+          MotionTransition.shared.cancel(isAnimated: false)
+        }
+        
+        guard canSelect(at: nextIndex) else {
+          return
+        }
+        
+        selectedIndex = nextIndex
+        MotionTransition.shared.setCompletionCallbackForNextTransition { [weak self] isFinishing in
+          guard let `self` = self, isFinishing else {
+            return
+          }
+          
+          self.delegate?.tabBarController?(self, didSelect: self.viewControllers![nextIndex])
+        }
+      } else {
+        let progress = abs(translationX / view.bounds.width)
+        MotionTransition.shared.update(Double(progress))
+      }
+      
+    default:
+      let progress = (translationX + velocityX) / view.bounds.width
+      
+      let isUserHandDirectionLeft = progress < 0
+      let isTargetHandDirectionLeft = selectedIndex > currentIndex
+      
+      if isUserHandDirectionLeft == isTargetHandDirectionLeft && abs(progress) > 0.5 {
+        MotionTransition.shared.finish()
+      } else {
+        MotionTransition.shared.cancel()
+      }
+      
+      currentIndex = -1
+    }
+  }
+
+  /// Prepares interactiveSwipeGesture.
+  func prepareSwipeGesture() {
+    guard nil == interactiveSwipeGesture else {
+      return
+    }
+    
+    interactiveSwipeGesture = UIPanGestureRecognizer(target: self, action: #selector(handleTransitionPan))
+    view.addGestureRecognizer(interactiveSwipeGesture!)
+  }
+  
+  /// Removes interactiveSwipeGesture.
+  func removeSwipeGesture() {
+    guard let v = interactiveSwipeGesture else {
+      return
+    }
+    
+    view.removeGestureRecognizer(v)
+    interactiveSwipeGesture = nil
+  }
+}
+
+private extension BottomNavigationController {
+  /// Sets tabBar class to MaterialTabBar.
+  func setTabBarClass() {
+    guard object_getClass(tabBar) === UITabBar.self else {
+      return
+    }
+    
+    object_setClass(tabBar, MaterialTabBar.self)
+  }
+}
+
+private extension BottomNavigationController {
+  /**
+   Checks if the view controller at a given index can be selected.
+   - Parameter at index: An Int.
+   */
+  func canSelect(at index: Int) -> Bool {
+    guard index != selectedIndex else {
+      return false
+    }
+    
+    let lastTabIndex = (tabBar.items?.count ?? 1) - 1
+    guard (0...lastTabIndex).contains(index) else {
+      return false
+    }
+    
+    guard !(index == lastTabIndex && tabBar.items?.last == moreNavigationController.tabBarItem) else {
+      return false
+    }
+    
+    let vc = viewControllers![index]
+    guard delegate?.tabBarController?(self, shouldSelect: vc) != false else {
+      return false
+    }
+    
+    return true
+  }
+}
+
+private extension BottomNavigationController {
   /// Prepares the tabBar.
   func prepareTabBar() {
     tabBar.isTranslucent = false

@@ -61,7 +61,7 @@ open class Snackbar: Bar {
   
   /// Text label.
   @IBInspectable
-  open let textLabel = UILabel()
+  public let textLabel = UILabel()
   
   open override var intrinsicContentSize: CGSize {
     return CGSize(width: bounds.width, height: 49)
@@ -104,7 +104,7 @@ open class Snackbar: Bar {
   /// Prepares the textLabel.
   private func prepareTextLabel() {
     textLabel.contentScaleFactor = Screen.scale
-    textLabel.font = RobotoFont.medium(with: 14)
+    textLabel.font = Theme.font.medium(with: 14)
     textLabel.textAlignment = .left
     textLabel.textColor = .white
     textLabel.numberOfLines = 0

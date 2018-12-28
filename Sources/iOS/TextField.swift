@@ -63,10 +63,15 @@ public protocol TextFieldDelegate: UITextFieldDelegate {
   optional func textField(textField: TextField, didClear text: String?)
 }
 
-open class TextField: UITextField {
+open class TextField: UITextField, Themeable {
+  
+  /// Minimum TextField text height.
+  private let minimumTextHeight: CGFloat = 32
+  
   /// Default size when using AutoLayout.
   open override var intrinsicContentSize: CGSize {
-    return CGSize(width: bounds.width, height: 32)
+    let h = textInsets.top + textInsets.bottom + minimumTextHeight
+    return CGSize(width: bounds.width, height: max(h, super.intrinsicContentSize.height))
   }
   
   /// A Boolean that indicates if the placeholder label is animated.
@@ -76,12 +81,7 @@ open class TextField: UITextField {
   /// Set the placeholder animation value.
   open var placeholderAnimation = TextFieldPlaceholderAnimation.default {
     didSet {
-      guard isEditing else {
-        placeholderLabel.isHidden = !isEmpty && .hidden == placeholderAnimation
-        return
-      }
-      
-      placeholderLabel.isHidden = .hidden == placeholderAnimation
+      updatePlaceholderVisibility()
     }
   }
   
@@ -92,7 +92,7 @@ open class TextField: UITextField {
   
   open override var text: String? {
     didSet {
-      placeholderAnimation = { placeholderAnimation }()
+      updatePlaceholderVisibility()
     }
   }
   
@@ -135,24 +135,15 @@ open class TextField: UITextField {
   @IBInspectable
   open var dividerNormalHeight: CGFloat = 1 {
     didSet {
-      guard !isEditing else {
-        return
-      }
-      
-      dividerThickness = dividerNormalHeight
+      updateDividerHeight()
     }
   }
-  
   
   /// Divider active height.
   @IBInspectable
   open var dividerActiveHeight: CGFloat = 2 {
     didSet {
-      guard isEditing else {
-        return
-      }
-      
-      dividerThickness = dividerActiveHeight
+      updateDividerHeight()
     }
   }
   
@@ -160,11 +151,7 @@ open class TextField: UITextField {
   @IBInspectable
   open var dividerNormalColor = Color.grey.lighten2 {
     didSet {
-      guard !isEditing else {
-        return
-      }
-      
-      dividerColor = dividerNormalColor
+      updateDividerColor()
     }
   }
   
@@ -172,11 +159,7 @@ open class TextField: UITextField {
   @IBInspectable
   open var dividerActiveColor = Color.blue.base {
     didSet {
-      guard isEditing else {
-        return
-      }
-      
-      dividerColor = dividerActiveColor
+      updateDividerColor()
     }
   }
   
@@ -213,7 +196,7 @@ open class TextField: UITextField {
   
   /// The placeholder UILabel.
   @IBInspectable
-  open let placeholderLabel = UILabel()
+  public let placeholderLabel = UILabel()
   
   /// Placeholder normal text
   @IBInspectable
@@ -249,7 +232,7 @@ open class TextField: UITextField {
   
   /// The detailLabel UILabel that is displayed.
   @IBInspectable
-  open let detailLabel = UILabel()
+  public let detailLabel = UILabel()
   
   /// The detailLabel text value.
   @IBInspectable
@@ -281,13 +264,9 @@ open class TextField: UITextField {
   
   /// Handles the textAlignment of the placeholderLabel.
   open override var textAlignment: NSTextAlignment {
-    get {
-      return super.textAlignment
-    }
-    set(value) {
-      super.textAlignment = value
-      placeholderLabel.textAlignment = value
-      detailLabel.textAlignment = value
+    didSet {
+      placeholderLabel.textAlignment = textAlignment
+      detailLabel.textAlignment = textAlignment
     }
   }
   
@@ -442,13 +421,17 @@ open class TextField: UITextField {
   
   /// EdgeInsets for text.
   @objc
-  open var textInset: CGFloat = 0
+  open var textInsets: EdgeInsets = .zero
+  
+  /// EdgeInsets preset property for text.
+  open var textInsetsPreset = EdgeInsetsPreset.none {
+    didSet {
+      textInsets = EdgeInsetsPresetToValue(preset: textInsetsPreset)
+    }
+  }
   
   open override func textRect(forBounds bounds: CGRect) -> CGRect {
-    var b = super.textRect(forBounds: bounds)
-    b.origin.x += textInset
-    b.size.width -= textInset
-    return b
+    return super.textRect(forBounds: bounds).inset(by: textInsets)
   }
   
   open override func editingRect(forBounds bounds: CGRect) -> CGRect {
@@ -467,7 +450,7 @@ open class TextField: UITextField {
     borderStyle = .none
     backgroundColor = nil
     contentScaleFactor = Screen.scale
-    font = RobotoFont.regular(with: 16)
+    font = Theme.font.regular(with: 16)
     textColor = Color.darkText.primary
     
     prepareDivider()
@@ -476,6 +459,25 @@ open class TextField: UITextField {
     prepareTargetHandlers()
     prepareTextAlignment()
     prepareRightView()
+    applyCurrentTheme()
+  }
+  
+  /**
+   Applies the given theme.
+   - Parameter theme: A Theme.
+   */
+  open func apply(theme: Theme) {
+    placeholderActiveColor = theme.secondary
+    placeholderNormalColor = theme.onSurface.withAlphaComponent(0.38)
+    
+    leftViewActiveColor = theme.secondary
+    leftViewNormalColor = theme.onSurface.withAlphaComponent(0.38)
+    
+    dividerActiveColor = theme.secondary
+    dividerNormalColor = theme.onSurface.withAlphaComponent(0.12)
+    
+    detailColor = theme.onSurface.withAlphaComponent(0.38)
+    textColor = theme.onSurface.withAlphaComponent(0.87)
   }
 }
 
@@ -494,7 +496,7 @@ fileprivate extension TextField {
   
   /// Prepares the detailLabel.
   func prepareDetailLabel() {
-    detailLabel.font = RobotoFont.regular(with: 12)
+    detailLabel.font = Theme.font.regular(with: 12)
     detailLabel.numberOfLines = 0
     detailColor = Color.darkText.others
     addSubview(detailLabel)
@@ -540,6 +542,26 @@ fileprivate extension TextField {
     placeholderLabel.textColor = isEditing ? placeholderActiveColor : placeholderNormalColor
   }
   
+  /// Updates the placeholder visibility.
+  func updatePlaceholderVisibility() {
+    guard isEditing else {
+      placeholderLabel.isHidden = !isEmpty && .hidden == placeholderAnimation
+      return
+    }
+    
+    placeholderLabel.isHidden = .hidden == placeholderAnimation
+  }
+  
+  /// Updates the dividerColor.
+  func updateDividerColor() {
+    dividerColor = isEditing ? dividerActiveColor : dividerNormalColor
+  }
+  
+  /// Updates the dividerThickness.
+  func updateDividerHeight() {
+    dividerThickness = isEditing ? dividerActiveHeight : dividerNormalHeight
+  }
+  
   /// Update the placeholder text to the active state.
   func updatePlaceholderTextToActiveState() {
     guard isPlaceholderUppercasedWhenEditing else {
@@ -575,28 +597,31 @@ fileprivate extension TextField {
 fileprivate extension TextField {
   /// Layout the placeholderLabel.
   func layoutPlaceholderLabel() {
-    let w = leftViewWidth + textInset
-    let h = 0 == bounds.height ? intrinsicContentSize.height : bounds.height
-    
-    placeholderLabel.transform = CGAffineTransform.identity
+    let leftPadding = leftViewWidth + textInsets.left
+    let w = bounds.width - leftPadding - textInsets.right
+    var h = placeholderLabel.sizeThatFits(CGSize(width: w, height: .greatestFiniteMagnitude)).height
+    h = min(h, bounds.height - textInsets.top - textInsets.bottom)
+    h = max(h, minimumTextHeight)
+
+    placeholderLabel.bounds.size = CGSize(width: w, height: h)
     
     guard isEditing || !isEmpty || !isPlaceholderAnimated else {
-      placeholderLabel.frame = CGRect(x: w, y: 0, width: bounds.width - leftViewWidth - 2 * textInset, height: h)
+      placeholderLabel.transform = CGAffineTransform.identity
+      placeholderLabel.frame.origin = CGPoint(x: leftPadding, y: textInsets.top)
       return
     }
     
-    placeholderLabel.frame = CGRect(x: w, y: 0, width: bounds.width - leftViewWidth - 2 * textInset, height: h)
     placeholderLabel.transform = CGAffineTransform(scaleX: placeholderActiveScale, y: placeholderActiveScale)
+    placeholderLabel.frame.origin.y = -placeholderLabel.frame.height + placeholderVerticalOffset
     
-    switch textAlignment {
+    switch placeholderLabel.textAlignment {
     case .left, .natural:
-      placeholderLabel.frame.origin.x = w + placeholderHorizontalOffset
+      placeholderLabel.frame.origin.x = leftPadding + placeholderHorizontalOffset
     case .right:
-      placeholderLabel.frame.origin.x = (bounds.width * (1.0 - placeholderActiveScale)) - textInset + placeholderHorizontalOffset
+      let scaledWidth = w * placeholderActiveScale
+      placeholderLabel.frame.origin.x = bounds.width - scaledWidth - textInsets.right + placeholderHorizontalOffset
     default:break
     }
-    
-    placeholderLabel.frame.origin.y = -placeholderLabel.frame.height + placeholderVerticalOffset
   }
   
   /// Layout the leftView.
@@ -611,13 +636,13 @@ fileprivate extension TextField {
   }
   /// Layout the rightView.
   func layoutRightView() {
-    guard let rightView = rightView else {
+    guard let v = rightView else {
       return
     }
     
-    let w = CGFloat(rightView.grid.views.count) * bounds.height
-    rightView.frame = CGRect(x: bounds.width - w, y: 0, width: w, height: bounds.height)
-    rightView.grid.reload()
+    let w = CGFloat(v.grid.views.count) * bounds.height
+    v.frame = CGRect(x: bounds.width - w, y: 0, width: w, height: bounds.height)
+    v.grid.reload()
   }
 }
 
@@ -688,96 +713,53 @@ fileprivate extension TextField {
   }
 }
 
-extension TextField {
+private extension TextField {
   /// The animation for leftView when editing begins.
-  fileprivate func leftViewEditingBeginAnimation() {
+  func leftViewEditingBeginAnimation() {
     updateLeftViewColor()
   }
   
   /// The animation for leftView when editing ends.
-  fileprivate func leftViewEditingEndAnimation() {
+  func leftViewEditingEndAnimation() {
     updateLeftViewColor()
   }
   
   /// The animation for the divider when editing begins.
-  fileprivate func dividerEditingDidBeginAnimation() {
-    dividerThickness = dividerActiveHeight
-    dividerColor = dividerActiveColor
+  func dividerEditingDidBeginAnimation() {
+    updateDividerHeight()
+    updateDividerColor()
   }
   
   /// The animation for the divider when editing ends.
-  fileprivate func dividerEditingDidEndAnimation() {
-    dividerThickness = dividerNormalHeight
-    dividerColor = dividerNormalColor
+  func dividerEditingDidEndAnimation() {
+    updateDividerHeight()
+    updateDividerColor()
   }
   
   /// The animation for the placeholder when editing begins.
-  fileprivate func placeholderEditingDidBeginAnimation() {
-    guard .default == placeholderAnimation else {
-      placeholderLabel.isHidden = true
-      return
-    }
-    
+  func placeholderEditingDidBeginAnimation() {
+    updatePlaceholderVisibility()
     updatePlaceholderLabelColor()
     
     guard isPlaceholderAnimated else {
-      updatePlaceholderTextToActiveState()
       return
     }
     
-    guard isEmpty else {
-      updatePlaceholderTextToActiveState()
-      return
-    }
-    
-    UIView.animate(withDuration: 0.15, animations: { [weak self] in
-      guard let `self` = self else {
-        return
-      }
-      
-      self.placeholderLabel.transform = CGAffineTransform(scaleX: self.placeholderActiveScale, y: self.placeholderActiveScale)
-      
-      self.updatePlaceholderTextToActiveState()
-      
-      switch self.textAlignment {
-      case .left, .natural:
-        self.placeholderLabel.frame.origin.x = self.leftViewWidth + self.textInset + self.placeholderHorizontalOffset
-      case .right:
-        self.placeholderLabel.frame.origin.x = (self.bounds.width * (1.0 - self.placeholderActiveScale)) - self.textInset + self.placeholderHorizontalOffset
-      default:break
-      }
-      
-      self.placeholderLabel.frame.origin.y = -self.placeholderLabel.bounds.height + self.placeholderVerticalOffset
-    })
+    updatePlaceholderTextToActiveState()
+    UIView.animate(withDuration: 0.15, animations: layoutPlaceholderLabel)
   }
   
   /// The animation for the placeholder when editing ends.
-  fileprivate func placeholderEditingDidEndAnimation() {
-    guard .default == placeholderAnimation else {
-      placeholderLabel.isHidden = !isEmpty
-      return
-    }
-    
+  func placeholderEditingDidEndAnimation() {
+    updatePlaceholderVisibility()
     updatePlaceholderLabelColor()
-    updatePlaceholderTextToNormalState()
     
     guard isPlaceholderAnimated else {
       return
     }
     
-    guard isEmpty else {
-      return
-    }
-    
-    UIView.animate(withDuration: 0.15, animations: { [weak self] in
-      guard let `self` = self else {
-        return
-      }
-      
-      self.placeholderLabel.transform = CGAffineTransform.identity
-      self.placeholderLabel.frame.origin.x = self.leftViewWidth + self.textInset
-      self.placeholderLabel.frame.origin.y = 0
-    })
+    updatePlaceholderTextToNormalState()
+    UIView.animate(withDuration: 0.15, animations: layoutPlaceholderLabel)
   }
 }
 

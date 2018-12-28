@@ -34,7 +34,7 @@ open class ErrorTextField: TextField {
   
   /// The errorLabel UILabel that is displayed.
   @IBInspectable
-  open let errorLabel = UILabel()
+  public let errorLabel = UILabel()
   
   /// The errorLabel text value.
   @IBInspectable
@@ -69,9 +69,10 @@ open class ErrorTextField: TextField {
     get {
       return !errorLabel.isHidden
     }
-    set {
-      errorLabel.isHidden = !newValue
-      detailLabel.isHidden = newValue
+    set(value) {
+      errorLabel.isHidden = !value
+      detailLabel.isHidden = value
+      layoutSubviews()
     }
   }
   
@@ -83,7 +84,7 @@ open class ErrorTextField: TextField {
   
   /// Prepares the errorLabel.
   func prepareErrorLabel() {
-    errorLabel.font = RobotoFont.regular(with: 12)
+    errorLabel.font = Theme.font.regular(with: 12)
     errorLabel.numberOfLines = 0
     errorColor = { errorColor }() // call didSet
     addSubview(errorLabel)
@@ -92,5 +93,11 @@ open class ErrorTextField: TextField {
   open override func layoutSubviews() {
     super.layoutSubviews()
     layoutBottomLabel(label: errorLabel, verticalOffset: errorVerticalOffset)
+  }
+  
+  open override func apply(theme: Theme) {
+    super.apply(theme: theme)
+    
+    errorColor = theme.error
   }
 }

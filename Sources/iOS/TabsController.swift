@@ -39,6 +39,12 @@ public enum TabBarAlignment: Int {
   case bottom
 }
 
+public enum TabBarThemingStyle {
+  case auto
+  case primary
+  case secondary
+}
+
 extension UIViewController {
   /// TabItem reference.
   @objc
@@ -92,6 +98,24 @@ public protocol TabsControllerDelegate {
    */
   @objc
   optional func tabsController(tabsController: TabsController, didSelect viewController: UIViewController)
+  
+  /**
+   A delegation method that is executed when the interactive transition to view controller
+   will be cancelled.
+   - Parameter tabsController: A TabsController.
+   - Parameter viewController: A UIViewController.
+   */
+  @objc
+  optional func tabsController(tabsController: TabsController, willCancelSelecting viewController: UIViewController)
+  
+  /**
+   A delegation method that is executed when the interactive transition to view controller
+   has been cancelled.
+   - Parameter tabsController: A TabsController.
+   - Parameter viewController: A UIViewController.
+   */
+  @objc
+  optional func tabsController(tabsController: TabsController, didCancelSelecting viewController: UIViewController)
 }
 
 open class TabsController: TransitionController {
@@ -108,11 +132,10 @@ open class TabsController: TransitionController {
   
   /// The TabBar used to switch between view controllers.
   @IBInspectable
-  open let tabBar = TabBar()
+  public let tabBar = TabBar()
   
-  
-  /// A Boolean that indicates if the swipe feature is enabled..
-  open var isSwipeEnabled = false {
+  /// A Boolean that controls if the swipe feature is enabled.
+  open var isSwipeEnabled = true {
     didSet {
       guard isSwipeEnabled else {
         removeSwipeGesture()
@@ -144,9 +167,25 @@ open class TabsController: TransitionController {
   /// The tabBar alignment.
   open var tabBarAlignment = TabBarAlignment.bottom {
     didSet {
+      updateTabBarAlignment()
       layoutSubviews()
     }
   }
+  
+  /// The tabBar theming style.
+  open var tabBarThemingStyle = TabBarThemingStyle.auto
+  
+  /**
+   A UIPanGestureRecognizer property internally used for the interactive
+   swipe.
+   */
+  public private(set) var interactiveSwipeGesture: UIPanGestureRecognizer?
+  
+  /**
+   A private integer for storing index of target view controller
+   during interactive transition.
+   */
+  private var targetIndex = -1
   
   /**
    An initializer that initializes the object with a NSCoder object.
@@ -189,10 +228,54 @@ open class TabsController: TransitionController {
     prepareTabBar()
     prepareTabItems()
     prepareSelectedIndexViewController()
+    applyCurrentTheme()
   }
   
   open override func transition(to viewController: UIViewController, completion: ((Bool) -> Void)?) {
     transition(to: viewController, isTriggeredByUserInteraction: false, completion: completion)
+  }
+  
+  open override func apply(theme: Theme) {
+    super.apply(theme: theme)
+    
+    switch tabBarThemingStyle {
+    case .auto where (parent is NavigationController || parent is ToolbarController) && tabBarAlignment == .top:
+      fallthrough
+      
+    case .primary:
+      applyPrimary(theme: theme)
+      
+    default:
+      applySecondary(theme: theme)
+    }
+  }
+}
+
+private extension TabsController {
+  /**
+   Applies theming taking primary color as base.
+   - Parameter theme: A Theme
+   */
+  func applyPrimary(theme: Theme) {
+    tabBar.lineColor = theme.onPrimary.withAlphaComponent(0.68)
+    tabBar.backgroundColor = theme.primary
+    tabBar.setTabItemsColor(theme.onPrimary, for: .normal)
+    tabBar.setTabItemsColor(theme.onPrimary, for: .selected)
+    tabBar.setTabItemsColor(theme.onPrimary, for: .highlighted)
+    tabBar.isDividerHidden = true
+  }
+  
+  /**
+   Applies theming taking secondary color as base.
+   - Parameter theme: A Theme
+   */
+  func applySecondary(theme: Theme) {
+    tabBar.lineColor = theme.secondary
+    tabBar.backgroundColor = theme.background
+    tabBar.setTabItemsColor(theme.onSurface.withAlphaComponent(0.60), for: .normal)
+    tabBar.setTabItemsColor(theme.secondary, for: .selected)
+    tabBar.setTabItemsColor(theme.secondary, for: .highlighted)
+    tabBar.dividerColor = theme.onSurface.withAlphaComponent(0.12)
   }
 }
 
@@ -212,36 +295,25 @@ fileprivate extension TabsController {
       return
     }
     
-    var isAuto = false
-    
-    switch motionTransitionType {
-    case .auto:
-      switch viewController.motionTransitionType {
-      case .auto:
-        isAuto = true
-        MotionTransition.shared.setAnimationForNextTransition(fvcIndex < tvcIndex ? .slide(direction: .left) : .slide(direction: .right))
-      default:break
-      }
-    default:break
+    if case .auto = motionTransitionType, case .auto = viewController.motionTransitionType {
+      MotionTransition.shared.setAnimationForNextTransition(fvcIndex < tvcIndex ? .slide(direction: .left) : .slide(direction: .right))
     }
     
     if isTriggeredByUserInteraction {
       delegate?.tabsController?(tabsController: self, willSelect: viewController)
     }
     
-    super.transition(to: viewController) { [weak self, viewController = viewController, completion = completion] (isFinishing) in
+    super.transition(to: viewController) { [weak self] (isFinishing) in
       guard let `self` = self else {
         return
       }
       
-      if isAuto {
-        MotionTransition.shared.setAnimationForNextTransition(.auto)
-      }
-      
       completion?(isFinishing)
       
-      if isTriggeredByUserInteraction {
+      if isTriggeredByUserInteraction && isFinishing {
         self.delegate?.tabsController?(tabsController: self, didSelect: viewController)
+      } else {
+        self.delegate?.tabsController?(tabsController: self, didCancelSelecting: viewController)
       }
     }
   }
@@ -255,9 +327,14 @@ fileprivate extension TabsController {
   
   /// Prepares the TabBar.
   func prepareTabBar() {
-    tabBar.lineAlignment = .bottom == tabBarAlignment ? .top : .bottom
     tabBar._delegate = self
     view.addSubview(tabBar)
+    updateTabBarAlignment()
+  }
+  
+  func updateTabBarAlignment() {
+    tabBar.lineAlignment = .bottom == tabBarAlignment ? .top : .bottom
+    tabBar.dividerAlignment = .bottom == tabBarAlignment ? .top : .bottom
   }
   
   /// Prepares the `tabBar.tabItems`.
@@ -279,37 +356,90 @@ fileprivate extension TabsController {
     tabBar.tabItems = tabItems
     tabBar.selectedTabItem = tabItems[selectedIndex]
   }
-  
-  /// Prepare Swipe Gesture.
-  func prepareSwipeGesture() {
-    removeSwipeGesture()
-    
-    let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeGesture(gesture:)))
-    swipeRight.direction = .right
-    view.addGestureRecognizer(swipeRight)
-    
-    let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeGesture(gesture:)))
-    swipeLeft.direction = .left
-    view.addGestureRecognizer(swipeLeft)
-  }
 }
 
-fileprivate extension TabsController {
-  /// Remove Swipe Gesture.
-  func removeSwipeGesture() {
-    guard let v = view.gestureRecognizers else {
+private extension TabsController {
+  /**
+   A target method contolling interactive swipe transition based on
+   gesture recognizer.
+   - Parameter _ gesture: A UIPanGestureRecognizer.
+  */
+  @objc
+  func handleTransitionPan(_ gesture: UIPanGestureRecognizer) {
+    let translationX = gesture.translation(in: nil).x
+    let velocityX = gesture.velocity(in: nil).x
+    
+    switch gesture.state {
+    case .began, .changed:
+      let isSlidingLeft = targetIndex == -1 ? velocityX < 0 : translationX < 0
+      let nextIndex = selectedIndex + (isSlidingLeft ? 1 : -1)
+      
+      guard nextIndex >= 0, nextIndex < viewControllers.count else {
+        return
+      }
+      
+      if targetIndex != nextIndex {
+        /// 5 point threshold
+        guard abs(translationX) > 5 else {
+          return
+        }
+
+        if targetIndex != -1 {
+          delegate?.tabsController?(tabsController: self, willCancelSelecting: viewControllers[targetIndex])
+          tabBar.cancelLineTransition(isAnimated: false)
+          MotionTransition.shared.cancel(isAnimated: false)
+        }
+        
+        if internalSelect(at: nextIndex, isTriggeredByUserInteraction: true, selectTabItem: false)  {
+          tabBar.startLineTransition(for: nextIndex, duration: 0.35)
+          targetIndex = nextIndex
+        }
+      } else {
+        let progress = abs(translationX / view.bounds.width)
+        tabBar.updateLineTransition(progress)
+        MotionTransition.shared.update(Double(progress))
+      }
+      
+    default:
+      guard targetIndex != -1 else {
+        return
+      }
+      
+      let progress = (translationX + velocityX) / view.bounds.width
+      
+      let isUserHandDirectionLeft = progress < 0
+      let isTargetHandDirectionLeft = targetIndex > selectedIndex
+      
+      if isUserHandDirectionLeft == isTargetHandDirectionLeft && abs(progress) > 0.5 {
+        tabBar.finishLineTransition()
+        MotionTransition.shared.finish()
+      } else {
+        tabBar.cancelLineTransition()
+        MotionTransition.shared.cancel()
+        delegate?.tabsController?(tabsController: self, willCancelSelecting: viewControllers[targetIndex])
+      }
+      targetIndex = -1
+    }
+  }
+  
+  /// Prepares interactiveSwipeGesture.
+  func prepareSwipeGesture() {
+    guard nil == interactiveSwipeGesture else {
       return
     }
     
-    for gesture in v {
-      guard let recognizer = gesture as? UISwipeGestureRecognizer else {
-        continue
-      }
-      
-      if .left == recognizer.direction || .right == recognizer.direction {
-        view.removeGestureRecognizer(recognizer)
-      }
+    interactiveSwipeGesture = UIPanGestureRecognizer(target: self, action: #selector(handleTransitionPan))
+    container.addGestureRecognizer(interactiveSwipeGesture!)
+  }
+
+  /// Removes interactiveSwipeGesture.
+  func removeSwipeGesture() {
+    guard let v = interactiveSwipeGesture else {
+      return
     }
+    
+    container.removeGestureRecognizer(v)
+    interactiveSwipeGesture = nil
   }
 }
 
@@ -363,30 +493,6 @@ fileprivate extension TabsController {
   }
 }
 
-fileprivate extension TabsController {
-  /**
-   Handles the swipe gesture.
-   - Parameter gesture: A UIGestureRecognizer.
-   */
-  @objc
-  func handleSwipeGesture(gesture: UIGestureRecognizer) {
-    if let swipeGesture = gesture as? UISwipeGestureRecognizer {
-      switch swipeGesture.direction {
-      case .right:
-        guard (selectedIndex - 1) >= 0 else { return }
-        internalSelect(at: selectedIndex - 1, isTriggeredByUserInteraction: true, selectTabItem: true)
-      
-      case .left:
-        guard (selectedIndex + 1) < viewControllers.count else { return }
-        internalSelect(at: selectedIndex + 1, isTriggeredByUserInteraction: true, selectTabItem: true)
-      
-      default:
-        break
-      }
-    }
-  }
-}
-
 extension TabsController {
   /**
    Transitions to the view controller that is at the given index.
@@ -425,6 +531,7 @@ extension TabsController {
       }
       
       self?.selectedIndex = index
+      self?.tabBar.selectedTabItem = self?.tabBar.tabItems[index]
     }
     
     return true

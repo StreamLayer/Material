@@ -87,14 +87,14 @@ public protocol TextViewDelegate : UITextViewDelegate {
   optional func textView(textView: TextView, didProcessEditing textStorage: TextStorage, text: String, range: NSRange)
 }
 
-open class TextView: UITextView {
+open class TextView: UITextView, Themeable {
   /// A boolean indicating whether the text is empty.
   open var isEmpty: Bool {
     return 0 == text?.utf16.count
   }
   
   /// A boolean indicating whether the text is in edit mode.
-  open fileprivate(set) var isEditing = true
+  open fileprivate(set) var isEditing = false
   
   /// Is the keyboard hidden.
   open fileprivate(set) var isKeyboardHidden = true
@@ -132,7 +132,10 @@ open class TextView: UITextView {
   
   /// The placeholder UILabel.
   @IBInspectable
-  open let placeholderLabel = UILabel()
+  public let placeholderLabel = UILabel()
+  
+  /// A property to enable/disable operations on the placeholderLabel
+  internal var isPlaceholderLabelEnabled = true
   
   /// Placeholder normal text
   @IBInspectable
@@ -156,6 +159,13 @@ open class TextView: UITextView {
     }
     set(value) {
       textContainerInset = value
+    }
+  }
+  
+  /// Handles the textAlignment of the placeholderLabel and textView itself.
+  open override var textAlignment: NSTextAlignment {
+    didSet {
+      placeholderLabel.textAlignment = textAlignment
     }
   }
   
@@ -273,38 +283,100 @@ open class TextView: UITextView {
     contentScaleFactor = Screen.scale
     textContainerInset = .zero
     backgroundColor = nil
-    font = RobotoFont.regular(with: 16)
+    font = Theme.font.regular(with: 16)
     textColor = Color.darkText.primary
     
     prepareNotificationHandlers()
     prepareRegularExpression()
     preparePlaceholderLabel()
+    applyCurrentTheme()
+  }
+  
+  open override var contentSize: CGSize {
+    didSet {
+      guard isGrowEnabled else {
+        return
+      }
+      invalidateIntrinsicContentSize()
+      
+      guard isEditing && isHeightChangeAnimated else {
+        superview?.layoutIfNeeded()
+        return
+      }
+      
+      UIView.animate(withDuration: 0.15) {
+        let v = self.superview as? Editor ?? self
+        v.superview?.layoutIfNeeded()
+      }
+    }
+  }
+  
+  /// A Boolean that indicates if the height change during growing is animated.
+  open var isHeightChangeAnimated = true
+  
+  /// Maximum preffered layout height before scrolling.
+  open var preferredMaxLayoutHeight: CGFloat = 0 {
+    didSet {
+      invalidateIntrinsicContentSize()
+      superview?.layoutIfNeeded()
+    }
+  }
+  
+  /// A property indicating if textView allowed to grow.
+  private var isGrowEnabled: Bool {
+    return preferredMaxLayoutHeight > 0 && isScrollEnabled
+  }
+  
+  /// Minimum TextView text height.
+  internal let minimumTextHeight: CGFloat = 32
+  
+  open override var intrinsicContentSize: CGSize {
+    guard isGrowEnabled else {
+      return super.intrinsicContentSize
+    }
+    
+    let insets = textContainerInsets
+    
+    let w = bounds.width - insets.left - insets.right - 2 * textContainer.lineFragmentPadding
+    let placeholderH = placeholderLabel.sizeThatFits(CGSize(width: w, height: .greatestFiniteMagnitude)).height
+    var h = max(minimumTextHeight, placeholderH) + insets.top + insets.bottom
+    h = max(h, contentSize.height)
+    return CGSize(width: UIView.noIntrinsicMetric, height: min(h, preferredMaxLayoutHeight))
   }
     
-    open override func insertText(_ text: String) {
-        fixTypingFont()
-        super.insertText(text)
-        fixTypingFont()
-    }
-    
-    open override func paste(_ sender: Any?) {
-        fixTypingFont()
-        super.paste(sender)
-        fixTypingFont()
-    }
+  open override func insertText(_ text: String) {
+    fixTypingFont()
+    super.insertText(text)
+    fixTypingFont()
+  }
+  
+  open override func paste(_ sender: Any?) {
+    fixTypingFont()
+    super.paste(sender)
+    fixTypingFont()
+  }
+  
+  /**
+   Applies the given theme.
+   - Parameter theme: A Theme.
+   */
+  open func apply(theme: Theme) {
+    textColor = theme.onSurface.withAlphaComponent(0.87)
+    placeholderColor = theme.onSurface.withAlphaComponent(0.38)
+  }
 }
 
 fileprivate extension TextView {
   /// Prepares the Notification handlers.
   func prepareNotificationHandlers() {
     let defaultCenter = NotificationCenter.default
-    defaultCenter.addObserver(self, selector: #selector(handleKeyboardWillShow(notification:)), name: .UIKeyboardWillShow, object: nil)
-    defaultCenter.addObserver(self, selector: #selector(handleKeyboardWillHide(notification:)), name: .UIKeyboardWillHide, object: nil)
-    defaultCenter.addObserver(self, selector: #selector(handleKeyboardDidShow(notification:)), name: .UIKeyboardDidShow, object: nil)
-    defaultCenter.addObserver(self, selector: #selector(handleKeyboardDidHide(notification:)), name: .UIKeyboardDidHide, object: nil)
-    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidBegin), name: .UITextViewTextDidBeginEditing, object: self)
-    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidChange), name: .UITextViewTextDidChange, object: self)
-    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidEnd), name: .UITextViewTextDidEndEditing, object: self)
+    defaultCenter.addObserver(self, selector: #selector(handleKeyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+    defaultCenter.addObserver(self, selector: #selector(handleKeyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+    defaultCenter.addObserver(self, selector: #selector(handleKeyboardDidShow(notification:)), name: UIResponder.keyboardDidShowNotification, object: nil)
+    defaultCenter.addObserver(self, selector: #selector(handleKeyboardDidHide(notification:)), name: UIResponder.keyboardDidHideNotification, object: nil)
+    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidBegin), name: UITextView.textDidBeginEditingNotification, object: self)
+    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidChange), name: UITextView.textDidChangeNotification, object: self)
+    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidEnd), name: UITextView.textDidEndEditingNotification, object: self)
   }
   
   /// Prepares the regular expression for matching.
@@ -325,12 +397,20 @@ fileprivate extension TextView {
 fileprivate extension TextView {
   /// Updates the placeholderLabel text color.
   func updatePlaceholderLabelColor() {
+    guard isPlaceholderLabelEnabled else {
+      return
+    }
+    
     tintColor = placeholderColor
     placeholderLabel.textColor = placeholderColor
   }
   
   /// Updates the placeholderLabel visibility.
   func updatePlaceholderVisibility() {
+    guard isPlaceholderLabelEnabled else {
+      return
+    }
+    
     placeholderLabel.isHidden = !isEmpty
   }
 }
@@ -338,15 +418,19 @@ fileprivate extension TextView {
 fileprivate extension TextView {
   /// Laysout the placeholder UILabel.
   func layoutPlaceholderLabel() {
-    placeholderLabel.preferredMaxLayoutWidth = textContainer.size.width - textContainer.lineFragmentPadding * 2
+    guard isPlaceholderLabelEnabled else {
+      return
+    }
+        
+    let insets = textContainerInsets
+    let leftPadding = insets.left + textContainer.lineFragmentPadding
+    let rightPadding = insets.right + textContainer.lineFragmentPadding
+    let w = bounds.width - leftPadding - rightPadding
+    var h = placeholderLabel.sizeThatFits(CGSize(width: w, height: .greatestFiniteMagnitude)).height
+    h = max(h, minimumTextHeight)
+    h = min(h, bounds.height - insets.top - insets.bottom)
     
-    let x = textContainerInset.left + textContainer.lineFragmentPadding
-    let y = textContainerInset.top
-    placeholderLabel.sizeToFit()
-    
-    placeholderLabel.frame.origin.x = x
-    placeholderLabel.frame.origin.y = y
-    placeholderLabel.frame.size.width = textContainer.size.width - textContainerInset.right - textContainer.lineFragmentPadding
+    placeholderLabel.frame = CGRect(x: leftPadding, y: insets.top, width: w, height: h)
   }
 }
 
@@ -361,7 +445,7 @@ fileprivate extension TextView {
       return
     }
     
-    guard let v = notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue else {
+    guard let v = notification.userInfo?[UIResponder.keyboardFrameBeginUserInfoKey] as? NSValue else {
       return
     }
     
@@ -380,7 +464,7 @@ fileprivate extension TextView {
     
     isKeyboardHidden = false
     
-    guard let v = notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue else {
+    guard let v = notification.userInfo?[UIResponder.keyboardFrameBeginUserInfoKey] as? NSValue else {
       return
     }
     
@@ -397,7 +481,7 @@ fileprivate extension TextView {
       return
     }
     
-    guard let v = notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue else {
+    guard let v = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else {
       return
     }
     
@@ -416,7 +500,7 @@ fileprivate extension TextView {
     
     isKeyboardHidden = true
     
-    guard let v = notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue else {
+    guard let v = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else {
       return
     }
     
@@ -473,7 +557,8 @@ private extension TextView {
   /// latter fixes the typing font change due to the insertion of an emoji character
   /// (typing font changes somehow are reflected in `UITextView.font` parameter).
   func fixTypingFont() {
-    let fontAttribute = NSAttributedStringKey.font.rawValue
+    let fontAttribute = NSAttributedString.Key.font
+    
     guard (typingAttributes[fontAttribute] as? UIFont)?.fontName == "AppleColorEmoji" else {
       return
     }

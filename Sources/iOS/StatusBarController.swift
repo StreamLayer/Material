@@ -83,7 +83,7 @@ open class StatusBarController: TransitionController {
   open var shouldHideStatusBarOnRotation = false
   
   /// A reference to the statusBar.
-  open let statusBar = UIView()
+  public let statusBar = UIView()
   
   open override func layoutSubviews() {
     super.layoutSubviews()
@@ -119,6 +119,12 @@ open class StatusBarController: TransitionController {
   open override func prepare() {
     super.prepare()
     prepareStatusBar()
+  }
+  
+  open override func apply(theme: Theme) {
+    super.apply(theme: theme)
+    
+    statusBar.backgroundColor = theme.primary.darker
   }
 }
 

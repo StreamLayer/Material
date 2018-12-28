@@ -48,7 +48,7 @@ open class TransitionController: ViewController {
   
   /// A reference to the container view.
   @IBInspectable
-  open let container = UIView()
+  public let container = UIView()
   
   /**
    A UIViewController property that references the active
@@ -131,25 +131,29 @@ open class TransitionController: ViewController {
   open func transition(to viewController: UIViewController, completion: ((Bool) -> Void)? = nil) {
     prepare(viewController: viewController, in: container)
     
-    switch motionTransitionType {
-    case .auto:break
-    default:
-      switch viewController.motionTransitionType {
-      case .auto:
-        viewController.motionTransitionType = motionTransitionType
-      default:break
-      }
+    if case .auto = viewController.motionTransitionType {
+      viewController.motionTransitionType = motionTransitionType
     }
     
     view.isUserInteractionEnabled = false
-    MotionTransition.shared.transition(from: rootViewController, to: viewController, in: container) { [weak self, viewController = viewController, completion = completion] (isFinishing) in
+    MotionTransition.shared.transition(from: rootViewController, to: viewController, in: container) { [weak self] isFinishing in
       guard let s = self else {
         return
       }
       
+      defer {
+        s.view.isUserInteractionEnabled = true
+        completion?(isFinishing)
+      }
+      
+      guard isFinishing else {
+        s.removeViewController(viewController: viewController)
+        s.removeViewController(viewController: s.rootViewController)
+        s.prepare(viewController: s.rootViewController, in: s.container)
+        return
+      }
+      
       s.rootViewController = viewController
-      s.view.isUserInteractionEnabled = true
-      completion?(isFinishing)
     }
   }
   
@@ -185,9 +189,9 @@ internal extension TransitionController {
    passed in controller view within the view hierarchy.
    */
   func prepare(viewController: UIViewController, in container: UIView) {
-    addChildViewController(viewController)
+    addChild(viewController)
     container.addSubview(viewController.view)
-    viewController.didMove(toParentViewController: self)
+    viewController.didMove(toParent: self)
     viewController.view.frame = container.bounds
     viewController.view.clipsToBounds = true
     viewController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -201,8 +205,8 @@ internal extension TransitionController {
    - Parameter at index: An Int for the view controller position.
    */
   func removeViewController(viewController: UIViewController) {
-    viewController.willMove(toParentViewController: nil)
+    viewController.willMove(toParent: nil)
     viewController.view.removeFromSuperview()
-    viewController.removeFromParentViewController()
+    viewController.removeFromParent()
   }
 }

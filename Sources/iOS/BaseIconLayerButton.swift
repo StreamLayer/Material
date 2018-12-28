@@ -20,6 +20,7 @@ open class BaseIconLayerButton: Button {
     open override var isSelected: Bool {
         didSet {
             iconLayer.setSelected(isSelected, animated: false)
+            updatePulseColor()
         }
     }
     
@@ -36,7 +37,7 @@ open class BaseIconLayerButton: Button {
     /// - Parameters:
     ///   - color: The color of the icon to use for the specified state.
     ///   - state: The state that uses the specified color. Supports only (.normal, .selected, .disabled)
-    open func setIconColor(_ color: UIColor, for state: UIControlState) {
+    open func setIconColor(_ color: UIColor, for state: UIControl.State) {
         switch state {
         case .normal:
             iconLayer.normalColor = color
@@ -53,7 +54,7 @@ open class BaseIconLayerButton: Button {
     ///
     /// - Parameter state: The state that uses the icon color. Supports only (.normal, .selected, .disabled)
     /// - Returns: The color of the title for the specified state.
-    open func iconColor(for state: UIControlState) -> UIColor {
+    open func iconColor(for state: UIControl.State) -> UIColor {
         switch state {
         case .normal:
             return iconLayer.normalColor
@@ -84,6 +85,7 @@ open class BaseIconLayerButton: Button {
     open override func prepare() {
         super.prepare()
         layer.addSublayer(iconLayer)
+        iconLayer.prepare()
         contentHorizontalAlignment = .left // default was .center
         reloadImage()
     }
@@ -122,7 +124,7 @@ open class BaseIconLayerButton: Button {
     ///
     /// This property affects `intrinsicContentSize` and `sizeThatFits(_:)`
     /// Use `iconEdgeInsets` to set margins.
-    open var iconSize: CGFloat = 16 {
+    open var iconSize: CGFloat = 18 {
         didSet {
             reloadImage()
         }
@@ -136,12 +138,24 @@ open class BaseIconLayerButton: Button {
     ///
     /// You can use `iconSize` and this property, or `titleEdgeInsets` and `contentEdgeInsets` to position
     /// the icon however you want.
-    /// For negative values, behavior is undefined. Default is `5.0` for all four margins
-    open var iconEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5) {
+    /// For negative values, behavior is undefined. Default is `8.0` for all four margins
+    open var iconEdgeInsets = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8) {
         didSet {
             reloadImage()
         }
     }
+  
+  open override func apply(theme: Theme) {
+    super.apply(theme: theme)
+    
+    setIconColor(theme.secondary, for: .selected)
+    setIconColor(theme.onSurface.withAlphaComponent(0.38), for: .normal)
+    titleColor = theme.onSurface.withAlphaComponent(0.60)
+    
+    selectedPulseColor = theme.secondary
+    normalPulseColor = theme.onSurface
+    updatePulseColor()
+  }
     
     
     /// This might be considered as a hackish way, but it's just manipulation
@@ -159,6 +173,18 @@ open class BaseIconLayerButton: Button {
         UIGraphicsEndImageContext()
         self.image = image
     }
+  
+  /// Pulse color for selected state.
+  open var selectedPulseColor = Color.white
+  
+  /// Pulse color for normal state.
+  open var normalPulseColor = Color.white
+}
+
+private extension BaseIconLayerButton {
+  func updatePulseColor() {
+    pulseColor = isSelected ? selectedPulseColor : normalPulseColor
+  }
 }
 
 // MARK: - BaseIconLayer
@@ -183,16 +209,6 @@ internal class BaseIconLayer: CALayer {
             normalColor = { normalColor }()
             disabledColor = { disabledColor }()
         }
-    }
-    
-    override init() {
-        super.init()
-        prepare()
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-        prepare()
     }
     
     func prepare() {

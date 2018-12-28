@@ -31,6 +31,12 @@ open class CheckButton: BaseIconLayerButton {
         guard !isAnimating else { return }
         setSelected(!isSelected, animated: true)
     }
+  
+  open override func apply(theme: Theme) {
+    super.apply(theme: theme)
+    
+    checkmarkColor = theme.onSecondary
+  }
 }
 
 internal class CheckBoxLayer: BaseIconLayer {
@@ -74,8 +80,8 @@ internal class CheckBoxLayer: BaseIconLayer {
         addSublayer(checkMarkLayer)
         checkMarkLayer.addSublayer(checkMarkLeftLayer)
         checkMarkLayer.addSublayer(checkMarkRightLayer)
-        checkMarkLeftLayer.lineCap = kCALineCapSquare
-        checkMarkRightLayer.lineCap = kCALineCapSquare
+        checkMarkLeftLayer.lineCap = CAShapeLayerLineCap.square
+        checkMarkRightLayer.lineCap = CAShapeLayerLineCap.square
         checkMarkLeftLayer.strokeEnd = 0
         checkMarkRightLayer.strokeEnd = 0
         checkmarkColor = { checkmarkColor }() // calling didSet
@@ -86,6 +92,7 @@ internal class CheckBoxLayer: BaseIconLayer {
         if isSelected {
             borderLayer.borderWidth = borderLayerNormalBorderWidth
         } else {
+            borderLayer.borderWidth = 0
             borderLayer.backgroundColor = (isEnabled ? normalColor : disabledColor).cgColor
             checkMarkLeftLayer.strokeEnd = 1
             checkMarkRightLayer.strokeEnd = 1

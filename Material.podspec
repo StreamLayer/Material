@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 	s.name = 'Material'
-	s.version = '2.16.4'
-	s.swift_version = '4.0'
+	s.version = '3.0.0'
+	s.swift_version = '4.2'
 	s.license = 'BSD-3-Clause'
 	s.summary = 'A UI/UX framework for creating beautiful applications.'
 	s.homepage = 'http://cosmicmind.com'
@@ -22,6 +22,6 @@ Pod::Spec.new do |s|
 			'com.cosmicmind.material.fonts' => ['Sources/**/*.ttf']
 		}
 
-		s.dependency 'Motion', '~> 1.4.3'
+		s.dependency 'Motion', '~> 2.0.0'
 	end
 end

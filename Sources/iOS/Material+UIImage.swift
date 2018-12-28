@@ -161,7 +161,7 @@ extension UIImage {
    */
   open func crop(toWidth tw: CGFloat, toHeight th: CGFloat) -> UIImage? {
     let g: UIImage?
-    let b: Bool = width > height
+    let b = width > height
     let s: CGFloat = b ? th / height : tw / width
     let t: CGSize = CGSize(width: tw, height: th)
     
@@ -298,7 +298,7 @@ extension UIImage {
     let screenScale = Screen.scale
     let imageRect = CGRect(origin: .zero, size: size)
     let hasBlur = radius > CGFloat(Float.ulpOfOne)
-    let hasSaturationChange = fabs(saturationDeltaFactor - 1.0) > CGFloat(Float.ulpOfOne)
+    let hasSaturationChange = abs(saturationDeltaFactor - 1.0) > CGFloat(Float.ulpOfOne)
     
     if hasBlur || hasSaturationChange {
       UIGraphicsBeginImageContextWithOptions(size, false, screenScale)

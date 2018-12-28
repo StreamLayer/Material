@@ -30,9 +30,7 @@
 
 import UIKit
 
-fileprivate var ToolbarContext: UInt8 = 0
-
-open class Toolbar: Bar {
+open class Toolbar: Bar, Themeable {
   /// A convenience property to set the titleLabel.text.
   @IBInspectable
   open var title: String? {
@@ -47,7 +45,7 @@ open class Toolbar: Bar {
   
   /// Title label.
   @IBInspectable
-  open let titleLabel = UILabel()
+  public let titleLabel = UILabel()
   
   /// A convenience property to set the detailLabel.text.
   @IBInspectable
@@ -63,12 +61,31 @@ open class Toolbar: Bar {
   
   /// Detail label.
   @IBInspectable
-  open let detailLabel = UILabel()
+  public let detailLabel = UILabel()
   
-  deinit {
-    removeObserver(self, forKeyPath: #keyPath(titleLabel.textAlignment))
+  open override var leftViews: [UIView] {
+    didSet {
+      prepareIconButtons(leftViews)
+    }
   }
   
+  open override var centerViews: [UIView] {
+    didSet {
+      prepareIconButtons(centerViews)
+    }
+  }
+  
+  open override var rightViews: [UIView] {
+    didSet {
+      prepareIconButtons(rightViews)
+    }
+  }
+
+  deinit {
+    titleLabelTextAlignmentObserver.invalidate()
+    titleLabelTextAlignmentObserver = nil
+  }
+
   /**
    An initializer that initializes the object with a NSCoder object.
    - Parameter aDecoder: A NSCoder instance.
@@ -85,15 +102,6 @@ open class Toolbar: Bar {
    */
   public override init(frame: CGRect) {
     super.init(frame: frame)
-  }
-  
-  open override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-    guard "titleLabel.textAlignment" == keyPath else {
-      super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
-      return
-    }
-    
-    contentViewAlignment = .center == titleLabel.textAlignment ? .center : .full
   }
   
   open override func layoutSubviews() {
@@ -143,23 +151,59 @@ open class Toolbar: Bar {
     prepareTitleLabel()
     prepareDetailLabel()
   }
+  
+  /**
+   Applies the given theme.
+   - Parameter theme: A Theme.
+   */
+  open func apply(theme: Theme) {
+    backgroundColor = theme.primary
+    (leftViews + rightViews + centerViews).forEach {
+      guard let v = $0 as? IconButton, v.isThemingEnabled else {
+        return
+      }
+      
+     v.apply(theme: theme)
+    }
+    
+    if !((titleLabel as? Themeable)?.isThemingEnabled == false) {
+      titleLabel.textColor = theme.onPrimary
+    }
+    
+    if !((detailLabel as? Themeable)?.isThemingEnabled == false) {
+      detailLabel.textColor = theme.onPrimary
+    }
+  }
+  
+  /// A reference to titleLabel.textAlignment observation.
+  private var titleLabelTextAlignmentObserver: NSKeyValueObservation!
 }
 
-fileprivate extension Toolbar {
+private extension Toolbar {
   /// Prepares the titleLabel.
   func prepareTitleLabel() {
     titleLabel.textAlignment = .center
     titleLabel.contentScaleFactor = Screen.scale
-    titleLabel.font = RobotoFont.medium(with: 17)
+    titleLabel.font = Theme.font.medium(with: 17)
     titleLabel.textColor = Color.darkText.primary
-    addObserver(self, forKeyPath: #keyPath(titleLabel.textAlignment), options: [], context: &ToolbarContext)
+    titleLabelTextAlignmentObserver = titleLabel.observe(\.textAlignment) { [weak self] titleLabel, _ in
+      self?.contentViewAlignment = .center == titleLabel.textAlignment ? .center : .full
+    }
   }
   
   /// Prepares the detailLabel.
   func prepareDetailLabel() {
     detailLabel.textAlignment = .center
     detailLabel.contentScaleFactor = Screen.scale
-    detailLabel.font = RobotoFont.regular(with: 12)
+    detailLabel.font = Theme.font.regular(with: 12)
     detailLabel.textColor = Color.darkText.secondary
+  }
+  
+  func prepareIconButtons(_ views: [UIView]) {
+    views.forEach {
+      ($0 as? IconButton)?.themingStyle = .onPrimary
+    }
+    
+    applyCurrentTheme()
   }
 }

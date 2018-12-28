@@ -63,7 +63,7 @@ public protocol SearchBarDelegate {
 open class SearchBar: Bar {
   /// The UITextField for the searchBar.
   @IBInspectable
-  open let textField = UITextField()
+  public let textField = UITextField()
   
   /// Reference to the clearButton.
   open fileprivate(set) var clearButton: IconButton!
@@ -213,7 +213,7 @@ fileprivate extension SearchBar {
   /// Prepares the textField.
   func prepareTextField() {
     textField.contentScaleFactor = Screen.scale
-    textField.font = RobotoFont.regular(with: 17)
+    textField.font = Theme.font.regular(with: 17)
     textField.backgroundColor = Color.clear
     textField.clearButtonMode = .whileEditing
     textField.addTarget(self, action: #selector(handleEditingChanged(textField:)), for: .editingChanged)

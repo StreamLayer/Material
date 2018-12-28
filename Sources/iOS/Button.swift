@@ -31,14 +31,14 @@
 import UIKit
 import Motion
 
-open class Button: UIButton, Pulseable, PulseableLayer {
+open class Button: UIButton, Pulseable, PulseableLayer, Themeable {
   /**
    A CAShapeLayer used to manage elements that would be affected by
    the clipToBounds property of the backing layer. For example, this
    allows the dropshadow effect on the backing layer, while clipping
    the image to a desired shape within the visualLayer.
    */
-  open let visualLayer = CAShapeLayer()
+  public let visualLayer = CAShapeLayer()
   
   /// A Pulse reference.
   internal var pulse: Pulse!
@@ -191,23 +191,23 @@ open class Button: UIButton, Pulseable, PulseableLayer {
   /**
    A convenience initializer that acceps an image and tint
    - Parameter image: A UIImage.
-   - Parameter tintColor: A UI
+   - Parameter tintColor: A UIColor.
    */
-  public init(image: UIImage?, tintColor: UIColor = Color.blue.base) {
+  public init(image: UIImage?, tintColor: UIColor? = nil) {
     super.init(frame: .zero)
-    prepare(with: image, tintColor: tintColor)
     prepare()
+    prepare(with: image, tintColor: tintColor)
   }
   
   /**
    A convenience initializer that acceps a title and title
    - Parameter title: A String.
-   - Parameter titleColor: A UI
+   - Parameter titleColor: A UIColor.
    */
-  public init(title: String?, titleColor: UIColor = Color.blue.base) {
+  public init(title: String?, titleColor: UIColor? = nil) {
     super.init(frame: .zero)
-    prepare(with: title, titleColor: titleColor)
     prepare()
+    prepare(with: title, titleColor: titleColor)
   }
   
   open override func layoutSubviews() {
@@ -267,7 +267,7 @@ open class Button: UIButton, Pulseable, PulseableLayer {
       return
     }
     
-    bringSubview(toFront: v)
+    bringSubviewToFront(v)
   }
   
   /**
@@ -279,9 +279,17 @@ open class Button: UIButton, Pulseable, PulseableLayer {
    */
   open func prepare() {
     contentScaleFactor = Screen.scale
+    titleLabel?.font = Theme.font.regular(with: fontSize)
     prepareVisualLayer()
     preparePulse()
+    applyCurrentTheme()
   }
+  
+  /**
+   Applies the given theme.
+   - Parameter theme: A Theme.
+   */
+  open func apply(theme: Theme) { }
 }
 
 extension Button {
@@ -302,9 +310,9 @@ extension Button {
    - Parameter image: A UIImage.
    - Parameter tintColor: A UI
    */
-  fileprivate func prepare(with image: UIImage?, tintColor: UIColor) {
+  fileprivate func prepare(with image: UIImage?, tintColor: UIColor?) {
     self.image = image
-    self.tintColor = tintColor
+    self.tintColor = tintColor ?? self.tintColor
   }
   
   /**
@@ -312,9 +320,9 @@ extension Button {
    - Parameter title: A String.
    - Parameter titleColor: A UI
    */
-  fileprivate func prepare(with title: String?, titleColor: UIColor) {
+  fileprivate func prepare(with title: String?, titleColor: UIColor?) {
     self.title = title
-    self.titleColor = titleColor
+    self.titleColor = titleColor ?? self.titleColor
   }
 }
 
