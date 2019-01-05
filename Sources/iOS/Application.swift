@@ -61,10 +61,12 @@ public struct Application {
   }
   #endif
 
+  #if os(iOS)
   /// A boolean indicating if the device is in Portrait mode.
   public static var isPortrait: Bool {
     return !isLandscape
   }
+  #endif
 
   #if os(iOS)
   /// The current UIInterfaceOrientation value.
@@ -97,6 +99,7 @@ public struct Application {
   }
   #endif
 
+  #if os(iOS)
   /**
    A boolean that indicates based on iPhone rules if the
    status bar should be shown.
@@ -104,6 +107,7 @@ public struct Application {
   public static var shouldStatusBarBeHidden: Bool {
     return isLandscape && .phone == Device.userInterfaceIdiom
   }
+  #endif
 
   /// A reference to the user interface layout direction.
   public static var userInterfaceLayoutDirection: UIUserInterfaceLayoutDirection {
