@@ -10,12 +10,13 @@ Pod::Spec.new do |s|
  	s.source = { :git => 'https://github.com/CosmicMind/Material.git', :tag => s.version }
 
 	s.default_subspec = 'Core'
-  s.ios.deployment_target = '8.0'
-  s.tvos.deployment_target = '10.0'
+    s.ios.deployment_target = '8.0'
+    s.tvos.deployment_target = '10.0'
 
 	s.subspec 'Core' do |s|
 		s.ios.deployment_target = '8.0'
-		s.ios.source_files = 'Sources/**/*.swift'
+		s.tvos.deployment_target = '10.0'
+		s.source_files = 'Sources/**/*.swift'
 		s.requires_arc = true
 		s.resource_bundles = {
 			'com.cosmicmind.material.icons' => ['Sources/**/*.xcassets'],
