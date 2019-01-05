@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		51BFE56C21E0CD5D001F21DE /* MaterialTVOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 51BFE56A21E0CD5D001F21DE /* MaterialTVOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		961154CC1F32A7B100A78D74 /* ChipBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 961154CB1F32A7B100A78D74 /* ChipBar.swift */; };
 		961527B91F3A509900E8B2AC /* ChipBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 961527B81F3A509900E8B2AC /* ChipBarController.swift */; };
 		9617B07D1DFCA8CF00410F8F /* Application.swift in Headers */ = {isa = PBXBuildFile; fileRef = 961E6BDE1DDA2A95004E6C93 /* Application.swift */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -210,7 +209,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		51BFE56821E0CD5D001F21DE /* Material.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Material.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		51BFE56A21E0CD5D001F21DE /* MaterialTVOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MaterialTVOS.h; sourceTree = "<group>"; };
 		51BFE56B21E0CD5D001F21DE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		961154CB1F32A7B100A78D74 /* ChipBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChipBar.swift; sourceTree = "<group>"; };
@@ -323,16 +321,6 @@
 		9DF58CED20C098C60098968D /* ErrorTextFieldValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorTextFieldValidator.swift; sourceTree = "<group>"; };
 		9DF74C4D20D15D84003C1D66 /* Material+UIColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Material+UIColor.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		51BFE56521E0CD5D001F21DE /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		51BFE56921E0CD5D001F21DE /* MaterialTVOS */ = {
@@ -479,7 +467,6 @@
 			isa = PBXGroup;
 			children = (
 				963832361B88DFD80015F710 /* Material.framework */,
-				51BFE56821E0CD5D001F21DE /* Material.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -835,14 +822,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		51BFE56321E0CD5D001F21DE /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				51BFE56C21E0CD5D001F21DE /* MaterialTVOS.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		963832331B88DFD80015F710 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -931,24 +910,6 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		51BFE56721E0CD5D001F21DE /* MaterialTVOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 51BFE56F21E0CD5D001F21DE /* Build configuration list for PBXNativeTarget "MaterialTVOS" */;
-			buildPhases = (
-				51BFE56321E0CD5D001F21DE /* Headers */,
-				51BFE56421E0CD5D001F21DE /* Sources */,
-				51BFE56521E0CD5D001F21DE /* Frameworks */,
-				51BFE56621E0CD5D001F21DE /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = MaterialTVOS;
-			productName = MaterialTVOS;
-			productReference = 51BFE56821E0CD5D001F21DE /* Material.framework */;
-			productType = "com.apple.product-type.framework";
-		};
 		963832351B88DFD80015F710 /* Material */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9638324C1B88DFD80015F710 /* Build configuration list for PBXNativeTarget "Material" */;
@@ -978,10 +939,6 @@
 				LastUpgradeCheck = 1000;
 				ORGANIZATIONNAME = "CosmicMind, Inc.";
 				TargetAttributes = {
-					51BFE56721E0CD5D001F21DE = {
-						CreatedOnToolsVersion = 10.1;
-						ProvisioningStyle = Automatic;
-					};
 					963832351B88DFD80015F710 = {
 						CreatedOnToolsVersion = 6.4;
 						DevelopmentTeam = 9Z76XCNLGL;
@@ -1010,7 +967,6 @@
 			projectRoot = "";
 			targets = (
 				963832351B88DFD80015F710 /* Material */,
-				51BFE56721E0CD5D001F21DE /* MaterialTVOS */,
 			);
 		};
 /* End PBXProject section */
@@ -1026,13 +982,6 @@
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
-		51BFE56621E0CD5D001F21DE /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		963832341B88DFD80015F710 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1049,13 +998,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		51BFE56421E0CD5D001F21DE /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		963832311B88DFD80015F710 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1172,69 +1114,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		51BFE56D21E0CD5D001F21DE /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_IDENTITY = "";
-				CODE_SIGN_STYLE = Automatic;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				INFOPLIST_FILE = MaterialTVOS/Info.plist;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.cosmicmind.MaterialTVOS;
-				PRODUCT_NAME = Material;
-				SDKROOT = appletvos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_VERSION = 4.2;
-				TARGETED_DEVICE_FAMILY = 3;
-				TVOS_DEPLOYMENT_TARGET = 10.0;
-			};
-			name = Debug;
-		};
-		51BFE56E21E0CD5D001F21DE /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_IDENTITY = "";
-				CODE_SIGN_STYLE = Automatic;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				INFOPLIST_FILE = MaterialTVOS/Info.plist;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.cosmicmind.MaterialTVOS;
-				PRODUCT_NAME = Material;
-				SDKROOT = appletvos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 4.2;
-				TARGETED_DEVICE_FAMILY = 3;
-				TVOS_DEPLOYMENT_TARGET = 10.0;
-			};
-			name = Release;
-		};
 		9638324A1B88DFD80015F710 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1407,15 +1286,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		51BFE56F21E0CD5D001F21DE /* Build configuration list for PBXNativeTarget "MaterialTVOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				51BFE56D21E0CD5D001F21DE /* Debug */,
-				51BFE56E21E0CD5D001F21DE /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		963832301B88DFD80015F710 /* Build configuration list for PBXProject "Material" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
