@@ -31,7 +31,7 @@
 import UIKit
 
 public struct Application {
-    
+
   /// A reference to UIApplication.shared application which doesn't trigger linker errors when Material is included in an extension
   /// Note that this will crash if actually called from within an extension
   public static var shared: UIApplication {
@@ -39,36 +39,41 @@ public struct Application {
     guard UIApplication.responds(to: sharedSelector) else {
       fatalError("[Material: Extensions cannot access Application]")
     }
-    
+
     let shared = UIApplication.perform(sharedSelector)
     return shared?.takeUnretainedValue() as! UIApplication
   }
-    
+
   /// An optional reference to the main UIWindow.
   public static var keyWindow: UIWindow? {
     return Application.shared.keyWindow
   }
-  
+
   /// An optional reference to the top most view controller.
   public static var rootViewController: UIViewController? {
     return keyWindow?.rootViewController
   }
-  
+
+  #if os(iOS)
   /// A boolean indicating if the device is in Landscape mode.
   public static var isLandscape: Bool {
     return Application.shared.statusBarOrientation.isLandscape
   }
-  
+  #endif
+
   /// A boolean indicating if the device is in Portrait mode.
   public static var isPortrait: Bool {
     return !isLandscape
   }
-  
+
+  #if os(iOS)
   /// The current UIInterfaceOrientation value.
   public static var orientation: UIInterfaceOrientation {
     return Application.shared.statusBarOrientation
   }
-  
+  #endif
+
+  #if os(iOS)
   /// Retrieves the device status bar style.
   public static var statusBarStyle: UIStatusBarStyle {
     get {
@@ -78,7 +83,9 @@ public struct Application {
       Application.shared.statusBarStyle = value
     }
   }
-  
+  #endif
+
+  #if os(iOS)
   /// Retrieves the device status bar hidden state.
   public static var isStatusBarHidden: Bool {
     get {
@@ -88,7 +95,8 @@ public struct Application {
       Application.shared.isStatusBarHidden = value
     }
   }
-  
+  #endif
+
   /**
    A boolean that indicates based on iPhone rules if the
    status bar should be shown.
@@ -96,7 +104,7 @@ public struct Application {
   public static var shouldStatusBarBeHidden: Bool {
     return isLandscape && .phone == Device.userInterfaceIdiom
   }
-  
+
   /// A reference to the user interface layout direction.
   public static var userInterfaceLayoutDirection: UIUserInterfaceLayoutDirection {
     return Application.shared.userInterfaceLayoutDirection
