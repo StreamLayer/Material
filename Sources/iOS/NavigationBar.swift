@@ -30,26 +30,27 @@
 
 import UIKit
 
+@available(iOS 8, *)
 open class NavigationBar: UINavigationBar, Themeable {
   /// Will layout the view.
   open var willLayout: Bool {
     return 0 < bounds.width && 0 < bounds.height && nil != superview
   }
-  
+
   /// Detail UILabel when in landscape for iOS 11.
   fileprivate var toolbarToText: [Toolbar: String?]?
-  
+
   open override var intrinsicContentSize: CGSize {
     return CGSize(width: bounds.width, height: bounds.height)
   }
-  
+
   /// A preset wrapper around contentEdgeInsets.
   open var contentEdgeInsetsPreset = EdgeInsetsPreset.square1 {
     didSet {
       contentEdgeInsets = EdgeInsetsPresetToValue(preset: contentEdgeInsetsPreset)
     }
   }
-  
+
   /// A reference to EdgeInsets.
   @IBInspectable
   open var contentEdgeInsets = EdgeInsetsPresetToValue(preset: .square1) {
@@ -57,14 +58,14 @@ open class NavigationBar: UINavigationBar, Themeable {
       layoutSubviews()
     }
   }
-  
+
   /// A preset wrapper around interimSpace.
   open var interimSpacePreset = InterimSpacePreset.interimSpace3 {
     didSet {
       interimSpace = InterimSpacePresetToValue(preset: interimSpacePreset)
     }
   }
-  
+
   /// A wrapper around grid.interimSpace.
   @IBInspectable
   open var interimSpace = InterimSpacePresetToValue(preset: .interimSpace3) {
@@ -72,7 +73,7 @@ open class NavigationBar: UINavigationBar, Themeable {
       layoutSubviews()
     }
   }
-  
+
   /**
    The back button image writes to the backIndicatorImage property and
    backIndicatorTransitionMaskImage property.
@@ -88,7 +89,7 @@ open class NavigationBar: UINavigationBar, Themeable {
       backIndicatorTransitionMaskImage = image
     }
   }
-  
+
   /// A property that accesses the backing layer's background
   @IBInspectable
   open override var backgroundColor: UIColor? {
@@ -99,7 +100,7 @@ open class NavigationBar: UINavigationBar, Themeable {
       barTintColor = value
     }
   }
-  
+
   /**
    An initializer that initializes the object with a NSCoder object.
    - Parameter aDecoder: A NSCoder instance.
@@ -108,7 +109,7 @@ open class NavigationBar: UINavigationBar, Themeable {
     super.init(coder: aDecoder)
     prepare()
   }
-  
+
   /**
    An initializer that initializes the object with a CGRect object.
    If AutoLayout is used, it is better to initilize the instance
@@ -119,34 +120,34 @@ open class NavigationBar: UINavigationBar, Themeable {
     super.init(frame: frame)
     prepare()
   }
-  
+
   open override func sizeThatFits(_ size: CGSize) -> CGSize {
     return intrinsicContentSize
   }
-  
+
   open override func layoutSubviews() {
     super.layoutSubviews()
     layoutShape()
     layoutShadowPath()
-    
+
     //iOS 11 added left/right layout margin in subviews of UINavigationBar
     //since we do not want to unsafely access private view directly
     //iterate subviews to set `layoutMargin` to zero
     for v in subviews {
       v.layoutMargins = .zero
     }
-    
+
     if let v = topItem {
       layoutNavigationItem(item: v)
     }
-    
+
     if let v = backItem {
       layoutNavigationItem(item: v)
     }
-    
+
     layoutDivider()
   }
-  
+
   /**
    Prepares the view instance when intialized. When subclassing,
    it is recommended to override the prepare method
@@ -160,17 +161,17 @@ open class NavigationBar: UINavigationBar, Themeable {
     depthPreset = .none
     contentScaleFactor = Screen.scale
     backButtonImage = Icon.cm.arrowBack
-    
+
     if #available(iOS 11, *) {
       toolbarToText = [:]
     }
-    
+
     let image = UIImage()
     shadowImage = image
     setBackgroundImage(image, for: .default)
     applyCurrentTheme()
   }
-  
+
   /**
    Applies the given theme.
    - Parameter theme: A Theme.
@@ -181,7 +182,7 @@ open class NavigationBar: UINavigationBar, Themeable {
       apply(theme: theme, to: $0)
     }
   }
-  
+
   /**
    Applies the given theme to the navigation item.
    - Parameter theme: A Theme.
@@ -192,6 +193,7 @@ open class NavigationBar: UINavigationBar, Themeable {
   }
 }
 
+@available(iOS 8, *)
 internal extension NavigationBar {
   /**
    Lays out the UINavigationItem.
@@ -201,20 +203,20 @@ internal extension NavigationBar {
     guard willLayout else {
       return
     }
-    
+
     if isThemingEnabled {
       apply(theme: .current, to: item)
     }
-    
+
     let toolbar = item.toolbar
     toolbar.backgroundColor = .clear
     toolbar.interimSpace = interimSpace
     toolbar.contentEdgeInsets = contentEdgeInsets
-    
+
     if #available(iOS 11, *) {
       if Application.shouldStatusBarBeHidden {
         toolbar.contentEdgeInsetsPreset = .none
-        
+
         if nil != toolbar.detailLabel.text {
           toolbarToText?[toolbar] = toolbar.detailLabel.text
           toolbar.detailLabel.text = nil
@@ -224,7 +226,7 @@ internal extension NavigationBar {
         toolbarToText?[toolbar] = nil
       }
     }
-    
+
     item.titleView = toolbar
     item.titleView!.frame = bounds
   }

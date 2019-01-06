@@ -59,23 +59,23 @@ open class BottomNavigationController: UITabBarController, Themeable {
         removeSwipeGesture()
         return
       }
-      
+
       prepareSwipeGesture()
     }
   }
-  
+
   /**
    A UIPanGestureRecognizer property internally used for the interactive
    swipe.
    */
   public private(set) var interactiveSwipeGesture: UIPanGestureRecognizer?
-  
+
   /**
    A private integer for storing index of current view controller
    during interactive transition.
    */
   private var currentIndex = -1
-  
+
   /**
    An initializer that initializes the object with a NSCoder object.
    - Parameter aDecoder: A NSCoder instance.
@@ -84,7 +84,7 @@ open class BottomNavigationController: UITabBarController, Themeable {
     super.init(coder: aDecoder)
     setTabBarClass()
   }
-  
+
   /**
    An initializer that initializes the object with an Optional nib and bundle.
    - Parameter nibNameOrNil: An Optional String for the nib.
@@ -94,13 +94,13 @@ open class BottomNavigationController: UITabBarController, Themeable {
     super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
     setTabBarClass()
   }
-  
+
   /// An initializer that accepts no parameters.
   public init() {
     super.init(nibName: nil, bundle: nil)
     setTabBarClass()
   }
-  
+
   /**
    An initializer that initializes the object an Array of UIViewControllers.
    - Parameter viewControllers: An Array of UIViewControllers.
@@ -110,17 +110,17 @@ open class BottomNavigationController: UITabBarController, Themeable {
     setTabBarClass()
     self.viewControllers = viewControllers
   }
-  
+
   open override func viewDidLoad() {
     super.viewDidLoad()
     prepare()
   }
-  
+
   open override func viewWillLayoutSubviews() {
     super.viewWillLayoutSubviews()
     layoutSubviews()
   }
-  
+
   /**
    To execute in the order of the layout chain, override this
    method. `layoutSubviews` should be called immediately, unless you
@@ -149,10 +149,10 @@ open class BottomNavigationController: UITabBarController, Themeable {
         }
       }
     }
-    
+
     tabBar.layoutDivider()
   }
-  
+
   /**
    Prepares the view instance when intialized. When subclassing,
    it is recommended to override the prepare method
@@ -164,13 +164,13 @@ open class BottomNavigationController: UITabBarController, Themeable {
     view.clipsToBounds = true
     view.backgroundColor = .white
     view.contentScaleFactor = Screen.scale
-    
+
     prepareTabBar()
     isSwipeEnabled = true
     isMotionEnabled = true
     applyCurrentTheme()
   }
-  
+
   /**
    Applies the given theme.
    - Parameter theme: A Theme.
@@ -179,7 +179,7 @@ open class BottomNavigationController: UITabBarController, Themeable {
     tabBar.tintColor = theme.secondary
     tabBar.barTintColor = theme.background
     tabBar.dividerColor = theme.onSurface.withAlphaComponent(0.12)
-    
+
     if #available(iOS 10.0, *) {
       tabBar.unselectedItemTintColor = theme.onSurface.withAlphaComponent(0.54)
     }
@@ -197,59 +197,59 @@ private extension BottomNavigationController {
     guard selectedIndex != NSNotFound else {
       return
     }
-    
+
     let translationX = gesture.translation(in: nil).x
     let velocityX = gesture.velocity(in: nil).x
-    
+
     switch gesture.state {
     case .began, .changed:
       let isSlidingLeft = currentIndex == -1 ? velocityX < 0 : translationX < 0
-      
+
       if currentIndex == -1 {
         currentIndex = selectedIndex
       }
-      
+
       let nextIndex = currentIndex + (isSlidingLeft ? 1 : -1)
-      
+
       if selectedIndex != nextIndex {
         /// 5 point threshold
         guard abs(translationX) > 5 else {
           return
         }
-        
+
         if currentIndex != selectedIndex {
           MotionTransition.shared.cancel(isAnimated: false)
         }
-        
+
         guard canSelect(at: nextIndex) else {
           return
         }
-        
+
         selectedIndex = nextIndex
         MotionTransition.shared.setCompletionCallbackForNextTransition { [weak self] isFinishing in
           guard let `self` = self, isFinishing else {
             return
           }
-          
+
           self.delegate?.tabBarController?(self, didSelect: self.viewControllers![nextIndex])
         }
       } else {
         let progress = abs(translationX / view.bounds.width)
         MotionTransition.shared.update(Double(progress))
       }
-      
+
     default:
       let progress = (translationX + velocityX) / view.bounds.width
-      
+
       let isUserHandDirectionLeft = progress < 0
       let isTargetHandDirectionLeft = selectedIndex > currentIndex
-      
+
       if isUserHandDirectionLeft == isTargetHandDirectionLeft && abs(progress) > 0.5 {
         MotionTransition.shared.finish()
       } else {
         MotionTransition.shared.cancel()
       }
-      
+
       currentIndex = -1
     }
   }
@@ -259,17 +259,17 @@ private extension BottomNavigationController {
     guard nil == interactiveSwipeGesture else {
       return
     }
-    
+
     interactiveSwipeGesture = UIPanGestureRecognizer(target: self, action: #selector(handleTransitionPan))
     view.addGestureRecognizer(interactiveSwipeGesture!)
   }
-  
+
   /// Removes interactiveSwipeGesture.
   func removeSwipeGesture() {
     guard let v = interactiveSwipeGesture else {
       return
     }
-    
+
     view.removeGestureRecognizer(v)
     interactiveSwipeGesture = nil
   }
@@ -281,7 +281,7 @@ private extension BottomNavigationController {
     guard object_getClass(tabBar) === UITabBar.self else {
       return
     }
-    
+
     object_setClass(tabBar, MaterialTabBar.self)
   }
 }
@@ -295,21 +295,23 @@ private extension BottomNavigationController {
     guard index != selectedIndex else {
       return false
     }
-    
+
     let lastTabIndex = (tabBar.items?.count ?? 1) - 1
     guard (0...lastTabIndex).contains(index) else {
       return false
     }
-    
+
+    #if os(iOS)
     guard !(index == lastTabIndex && tabBar.items?.last == moreNavigationController.tabBarItem) else {
       return false
     }
-    
+    #endif
+
     let vc = viewControllers![index]
     guard delegate?.tabBarController?(self, shouldSelect: vc) != false else {
       return false
     }
-    
+
     return true
   }
 }
@@ -321,7 +323,7 @@ private extension BottomNavigationController {
     tabBar.heightPreset = .normal
     tabBar.dividerColor = Color.grey.lighten2
     tabBar.dividerAlignment = .top
-    
+
     let image = UIImage()
     tabBar.shadowImage = image
     tabBar.backgroundImage = image
