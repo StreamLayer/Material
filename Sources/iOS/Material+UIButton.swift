@@ -38,11 +38,11 @@ public extension UIButton {
   var fontSize: CGFloat {
     get {
       guard let resultFontSize = titleLabel?.font?.pointSize else {
-        if #available(iOS 8, *) {
-          return UIFont.buttonFontSize
-        } else {
-          return UIFont.systemFont(ofSize: 20)
-        }
+        #if os(iOS)
+        return UIFont.buttonFontSize
+        #elseif os(tvOS)
+        return 20
+        #endif
       }
       return resultFontSize
     }
