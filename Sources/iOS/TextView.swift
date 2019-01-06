@@ -285,8 +285,10 @@ open class TextView: UITextView, Themeable {
     backgroundColor = nil
     font = Theme.font.regular(with: 16)
     textColor = Color.darkText.primary
-    
+
+    #if os(iOS)
     prepareNotificationHandlers()
+    #endif
     prepareRegularExpression()
     preparePlaceholderLabel()
     applyCurrentTheme()
@@ -369,14 +371,23 @@ open class TextView: UITextView, Themeable {
 fileprivate extension TextView {
   /// Prepares the Notification handlers.
   func prepareNotificationHandlers() {
+    #if os(iOS)
     let defaultCenter = NotificationCenter.default
-    defaultCenter.addObserver(self, selector: #selector(handleKeyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-    defaultCenter.addObserver(self, selector: #selector(handleKeyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
-    defaultCenter.addObserver(self, selector: #selector(handleKeyboardDidShow(notification:)), name: UIResponder.keyboardDidShowNotification, object: nil)
-    defaultCenter.addObserver(self, selector: #selector(handleKeyboardDidHide(notification:)), name: UIResponder.keyboardDidHideNotification, object: nil)
-    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidBegin), name: UITextView.textDidBeginEditingNotification, object: self)
-    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidChange), name: UITextView.textDidChangeNotification, object: self)
-    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidEnd), name: UITextView.textDidEndEditingNotification, object: self)
+    defaultCenter.addObserver(self, selector: #selector(handleKeyboardWillShow(notification:)),
+                              name: UIResponder.keyboardWillShowNotification, object: nil)
+    defaultCenter.addObserver(self, selector: #selector(handleKeyboardWillHide(notification:)),
+                              name: UIResponder.keyboardWillHideNotification, object: nil)
+    defaultCenter.addObserver(self, selector: #selector(handleKeyboardDidShow(notification:)),
+                              name: UIResponder.keyboardDidShowNotification, object: nil)
+    defaultCenter.addObserver(self, selector: #selector(handleKeyboardDidHide(notification:)),
+                              name: UIResponder.keyboardDidHideNotification, object: nil)
+    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidBegin),
+                              name: UITextView.textDidBeginEditingNotification, object: self)
+    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidChange),
+                              name: UITextView.textDidChangeNotification, object: self)
+    defaultCenter.addObserver(self, selector: #selector(handleTextViewTextDidEnd),
+                              name: UITextView.textDidEndEditingNotification, object: self)
+    #endif
   }
   
   /// Prepares the regular expression for matching.
