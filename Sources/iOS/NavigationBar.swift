@@ -30,7 +30,6 @@
 
 import UIKit
 
-@available(iOS 8, *)
 open class NavigationBar: UINavigationBar, Themeable {
   /// Will layout the view.
   open var willLayout: Bool {
@@ -81,12 +80,17 @@ open class NavigationBar: UINavigationBar, Themeable {
   @IBInspectable
   open var backButtonImage: UIImage? {
     get {
+      #if os(tvOS)
+      return nil
+      #endif
       return backIndicatorImage
     }
     set(value) {
       let image: UIImage? = value
+      #if os(iOS)
       backIndicatorImage = image
       backIndicatorTransitionMaskImage = image
+      #endif
     }
   }
 
@@ -156,7 +160,9 @@ open class NavigationBar: UINavigationBar, Themeable {
    when subclassing.
    */
   open func prepare() {
+    #if os(iOS)
     barStyle = .black
+    #endif
     isTranslucent = false
     depthPreset = .none
     contentScaleFactor = Screen.scale
@@ -193,7 +199,6 @@ open class NavigationBar: UINavigationBar, Themeable {
   }
 }
 
-@available(iOS 8, *)
 internal extension NavigationBar {
   /**
    Lays out the UINavigationItem.
@@ -213,6 +218,7 @@ internal extension NavigationBar {
     toolbar.interimSpace = interimSpace
     toolbar.contentEdgeInsets = contentEdgeInsets
 
+    #if os(iOS)
     if #available(iOS 11, *) {
       if Application.shouldStatusBarBeHidden {
         toolbar.contentEdgeInsetsPreset = .none
@@ -226,6 +232,7 @@ internal extension NavigationBar {
         toolbarToText?[toolbar] = nil
       }
     }
+    #endif
 
     item.titleView = toolbar
     item.titleView!.frame = bounds
