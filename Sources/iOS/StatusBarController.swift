@@ -52,7 +52,8 @@ open class StatusBarController: TransitionController {
       layoutSubviews()
     }
   }
-  
+
+  #if os(iOS)
   /// Device status bar style.
   open var statusBarStyle: UIStatusBarStyle {
     get {
@@ -62,7 +63,9 @@ open class StatusBarController: TransitionController {
       Application.statusBarStyle = value
     }
   }
-  
+  #endif
+
+  #if os(iOS)
   /// Device visibility state.
   open var isStatusBarHidden: Bool {
     get {
@@ -73,57 +76,70 @@ open class StatusBarController: TransitionController {
       statusBar.isHidden = isStatusBarHidden
     }
   }
-  
+  #endif
+
   /// An adjustment based on the rules for displaying the statusBar.
   open var statusBarOffsetAdjustment: CGFloat {
+    #if os(iOS)
     return Application.shouldStatusBarBeHidden || statusBar.isHidden ? 0 : statusBar.bounds.height
+    #else
+    return 0
+    #endif
   }
-  
+
   /// A boolean that indicates to hide the statusBar on rotation.
   open var shouldHideStatusBarOnRotation = false
-  
+
   /// A reference to the statusBar.
   public let statusBar = UIView()
-  
+
   open override func layoutSubviews() {
     super.layoutSubviews()
-    
+
     if shouldHideStatusBarOnRotation {
+      #if os(iOS)
       statusBar.isHidden = Application.shouldStatusBarBeHidden
+      #else
+      statusBar.isHidden = true
+      #endif
     }
-    
+
     statusBar.frame.size.width = view.bounds.width
-    
+
     if #available(iOS 11, *) {
       let v = topLayoutGuide.length
       statusBar.frame.size.height = 0 < v ? v : 20
     } else {
       statusBar.frame.size.height = 20
     }
-    
+
     switch displayStyle {
     case .partial:
       let h = statusBar.bounds.height
       container.frame.origin.y = h
       container.frame.size.height = view.bounds.height - h
-      
+
     case .full:
       container.frame = view.bounds
     }
-    
+
     rootViewController.view.frame = container.bounds
-    
+
+    #if os(iOS)
     container.layer.zPosition = statusBar.layer.zPosition + (Application.shouldStatusBarBeHidden ? 1 : -1)
+    #else
+    container.layer.zPosition = statusBar.layer.zPosition + 1
+    #endif
   }
-  
+
   open override func prepare() {
     super.prepare()
     prepareStatusBar()
   }
-  
+
   open override func apply(theme: Theme) {
     super.apply(theme: theme)
-    
+
     statusBar.backgroundColor = theme.primary.darker
   }
 }
@@ -134,7 +150,7 @@ fileprivate extension StatusBarController {
     if nil == statusBar.backgroundColor {
       statusBar.backgroundColor = .white
     }
-    
+
     view.addSubview(statusBar)
   }
 }
