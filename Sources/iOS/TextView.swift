@@ -445,6 +445,7 @@ fileprivate extension TextView {
   }
 }
 
+#if os(iOS)
 fileprivate extension TextView {
   /**
    Handler for when the keyboard will open.
@@ -455,14 +456,14 @@ fileprivate extension TextView {
     guard isKeyboardHidden else {
       return
     }
-    
+
     guard let v = notification.userInfo?[UIResponder.keyboardFrameBeginUserInfoKey] as? NSValue else {
       return
     }
-    
+
     (delegate as? TextViewDelegate)?.textView?(textView: self, willShowKeyboard: v)
   }
-  
+
   /**
    Handler for when the keyboard did open.
    - Parameter notification: A Notification.
@@ -472,16 +473,16 @@ fileprivate extension TextView {
     guard isKeyboardHidden else {
       return
     }
-    
+
     isKeyboardHidden = false
-    
+
     guard let v = notification.userInfo?[UIResponder.keyboardFrameBeginUserInfoKey] as? NSValue else {
       return
     }
-    
+
     (delegate as? TextViewDelegate)?.textView?(textView: self, didShowKeyboard: v)
   }
-  
+
   /**
    Handler for when the keyboard will close.
    - Parameter notification: A Notification.
@@ -491,14 +492,14 @@ fileprivate extension TextView {
     guard !isKeyboardHidden else {
       return
     }
-    
+
     guard let v = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else {
       return
     }
-    
+
     (delegate as? TextViewDelegate)?.textView?(textView: self, willHideKeyboard: v)
   }
-  
+
   /**
    Handler for when the keyboard did close.
    - Parameter notification: A Notification.
@@ -508,28 +509,28 @@ fileprivate extension TextView {
     guard !isKeyboardHidden else {
       return
     }
-    
+
     isKeyboardHidden = true
-    
+
     guard let v = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else {
       return
     }
-    
+
     (delegate as? TextViewDelegate)?.textView?(textView: self, didHideKeyboard: v)
   }
-  
+
   /// Notification handler for when text editing began.
   @objc
   func handleTextViewTextDidBegin() {
     isEditing = true
   }
-  
+
   /// Notification handler for when text changed.
   @objc
   func handleTextViewTextDidChange() {
     updatePlaceholderVisibility()
   }
-  
+
   /// Notification handler for when text editing ended.
   @objc
   func handleTextViewTextDidEnd() {
@@ -537,7 +538,7 @@ fileprivate extension TextView {
     updatePlaceholderVisibility()
   }
 }
-
+#endif
 extension TextView: TextStorageDelegate {
   @objc
   open func textStorage(textStorage: TextStorage, willProcessEditing text: String, range: NSRange) {
