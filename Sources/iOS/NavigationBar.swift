@@ -82,8 +82,9 @@ open class NavigationBar: UINavigationBar, Themeable {
     get {
       #if os(tvOS)
       return nil
-      #endif
+      #elseif os(iOS)
       return backIndicatorImage
+      #endif
     }
     set(value) {
       let image: UIImage? = value
