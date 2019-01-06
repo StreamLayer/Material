@@ -958,8 +958,10 @@ open class NavigationDrawerController: TransitionController {
       guard let v = Application.keyWindow else {
         return
       }
-      
+
+      #if os(iOS)
       v.windowLevel = UIWindow.Level.statusBar + 1
+      #endif
       
       guard let `self` = self else {
         return
