@@ -83,7 +83,6 @@ open class NavigationController: UINavigationController {
     guard let v = interactivePopGestureRecognizer else {
       return
     }
-    #endif
 
     guard let x = navigationDrawerController else {
       return
@@ -96,6 +95,7 @@ open class NavigationController: UINavigationController {
     if let r = x.rightPanGesture {
       r.require(toFail: v)
     }
+    #endif
   }
 
   open override func viewDidLoad() {

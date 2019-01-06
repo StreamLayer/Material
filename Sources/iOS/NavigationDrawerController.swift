@@ -954,21 +954,21 @@ open class NavigationDrawerController: TransitionController {
       return
     }
     
+    #if os(iOS)
     Motion.async { [weak self] in
       guard let v = Application.keyWindow else {
         return
       }
 
-      #if os(iOS)
       v.windowLevel = UIWindow.Level.statusBar + 1
-      #endif
-      
+
       guard let `self` = self else {
         return
       }
-      
+
       self.delegate?.navigationDrawerController?(navigationDrawerController: self, statusBar: true)
     }
+    #endif
   }
   
   /// Toggles the statusBar
