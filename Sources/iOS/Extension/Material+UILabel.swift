@@ -29,7 +29,14 @@ public extension UILabel {
   /// Convenience way to change font size.
   var fontSize: CGFloat {
     get {
-      return font?.pointSize ?? UIFont.labelFontSize
+      guard let resultFontSize = font?.pointSize else {
+        #if os(iOS)
+        return UIFont.labelFontSize
+        #elseif os(tvOS)
+        return 20
+        #endif
+      }
+      return resultFontSize
     }
     set(value) {
       font = font?.withSize(value) ?? UIFont.systemFont(ofSize: value)
