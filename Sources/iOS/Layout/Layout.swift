@@ -61,7 +61,7 @@ public extension UIView {
    Below iOS 11, it will be same as view.anchor.
    */
   var safeAnchor: LayoutAnchor {
-    if #available(iOS 11.0, *) {
+    if #available(iOS 11.0, tvOS 11.0, *) {
       return LayoutAnchor(constraintable: safeAreaLayoutGuide)
     } else {
       return anchor
