@@ -46,6 +46,7 @@ open class TransitionController: ViewController {
     return MotionTransition.shared.isTransitioning && MotionTransition.shared.fromViewController == rootViewController
   }
   
+  #if os(iOS)
   open override var childForStatusBarStyle: UIViewController? {
     return isTransitioning ? MotionTransition.shared.toViewController ?? rootViewController : rootViewController
   }
@@ -61,6 +62,7 @@ open class TransitionController: ViewController {
   open override var childForScreenEdgesDeferringSystemGestures: UIViewController? {
     return childForStatusBarStyle
   }
+  #endif
   
   /// A reference to the container view.
   @IBInspectable
