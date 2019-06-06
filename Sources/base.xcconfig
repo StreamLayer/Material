@@ -1,0 +1,47 @@
+//
+//  base.xcconfig
+//  Material
+//
+//  Created by Vitaly Aminev on 2019-06-05.
+//  Copyright © 2019 CosmicMind, Inc. All rights reserved.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+SUPPORTED_PLATFORMS = iphonesimulator iphoneos appletvos appletvsimulator
+TARGET_NAME = Material
+CLANG_MODULES_AUTOLINK = YES
+
+VALID_ARCHS[sdk=iphoneos*]             = arm64 armv7 armv7s
+VALID_ARCHS[sdk=iphonesimulator*]      = i386 x86_64
+VALID_ARCHS[sdk=appletvos*]            = arm64
+VALID_ARCHS[sdk=appletvsimulator*]     = x86_64
+
+// FMWK paths
+FRAMEWORK_SEARCH_PATHS                         = $(inherited)
+FRAMEWORK_SEARCH_PATHS[sdk=appletvos*]         = $(SRCROOT)/Carthage/Build/tvOS
+FRAMEWORK_SEARCH_PATHS[sdk=appletvsimulator*]  = $(SRCROOT)/Carthage/Build/tvOS
+FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]          = $(SRCROOT)/Carthage/Build/iOS
+FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]   = $(SRCROOT)/Carthage/Build/iOS
+
+OTHER_LDFLAGS = $(inherited) -framework "Motion"
+
+// Dynamic linking uses different default copy paths
+LD_RUNPATH_SEARCH_PATHS[sdk=iphoneos*]         = $(inherited) '@executable_path/Frameworks' '@loader_path/Frameworks'
+LD_RUNPATH_SEARCH_PATHS[sdk=iphonesimulator*]  = $(inherited) '@executable_path/Frameworks' '@loader_path/Frameworks'
+LD_RUNPATH_SEARCH_PATHS[sdk=appletvos*]        = $(inherited) '@executable_path/Frameworks' '@loader_path/Frameworks'
+LD_RUNPATH_SEARCH_PATHS[sdk=appletvsimulator*] = $(inherited) '@executable_path/Frameworks' '@loader_path/Frameworks'
+
+// iOS-specific default settings
+TARGETED_DEVICE_FAMILY[sdk=iphonesimulator*]  = 1,2
+TARGETED_DEVICE_FAMILY[sdk=iphone*]           = 1,2
+
+// TV-specific default settings
+TARGETED_DEVICE_FAMILY[sdk=appletvsimulator*] = 3
+TARGETED_DEVICE_FAMILY[sdk=appletv*]          = 3
+
+ENABLE_BITCODE[sdk=iphonesimulator*]          = YES
+ENABLE_BITCODE[sdk=iphone*]                   = YES
+ENABLE_BITCODE[sdk=appletvsimulator*]         = YES
+ENABLE_BITCODE[sdk=appletv*]                  = YES
