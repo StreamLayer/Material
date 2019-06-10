@@ -1,0 +1,16 @@
+//
+//  framework.xcconfig
+//  Material
+//
+//  Created by Vitaly Aminev on 2019-06-05.
+//  Copyright © 2019 CosmicMind, Inc. All rights reserved.
+//
+
+#include "base.xcconfig"
+
+CLANG_MODULES_AUTOLINK = YES
+
+ENABLE_BITCODE[sdk=iphonesimulator*]          = YES
+ENABLE_BITCODE[sdk=iphone*]                   = YES
+ENABLE_BITCODE[sdk=appletvsimulator*]         = YES
+ENABLE_BITCODE[sdk=appletv*]                  = YES

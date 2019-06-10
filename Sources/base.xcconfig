@@ -10,8 +10,6 @@
 // https://help.apple.com/xcode/#/dev745c5c974
 
 SUPPORTED_PLATFORMS = iphonesimulator iphoneos appletvos appletvsimulator
-TARGET_NAME = Material
-CLANG_MODULES_AUTOLINK = YES
 
 VALID_ARCHS[sdk=iphoneos*]             = arm64 armv7 armv7s
 VALID_ARCHS[sdk=iphonesimulator*]      = i386 x86_64
@@ -41,7 +39,4 @@ TARGETED_DEVICE_FAMILY[sdk=iphone*]           = 1,2
 TARGETED_DEVICE_FAMILY[sdk=appletvsimulator*] = 3
 TARGETED_DEVICE_FAMILY[sdk=appletv*]          = 3
 
-ENABLE_BITCODE[sdk=iphonesimulator*]          = YES
-ENABLE_BITCODE[sdk=iphone*]                   = YES
-ENABLE_BITCODE[sdk=appletvsimulator*]         = YES
-ENABLE_BITCODE[sdk=appletv*]                  = YES
+ENABLE_BITCODE = NO
